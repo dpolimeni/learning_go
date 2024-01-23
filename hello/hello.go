@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"root/greetings"
+
+	"github.com/gofiber/fiber/v2"
 )
 
 func main() {
@@ -39,4 +41,21 @@ func main() {
 	for key, value := range messages {
 		fmt.Println(key, value)
 	}
+
+	app := fiber.New()
+
+	app.Get("/", func(c *fiber.Ctx) error {
+		return c.SendString("Hello, World!")
+	})
+
+	app.Get("/hello", func(c *fiber.Ctx) error {
+		message, err := greetings.Hello("Diego")
+		if err != nil {
+			log.Fatal(err)
+		}
+		return c.SendString(message)
+	})
+
+	app.Listen(":3000")
+
 }
