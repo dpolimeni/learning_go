@@ -20,14 +20,20 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	// If no error was returned, print the returned message
+	// to the console.
+	fmt.Println(message)
 
-	secondMessage, err := greetings.Hello("")
+	// A slice of names.
+	names := []string{"Diego", "Giovanni", "Paolo"}
+	// Request greeting messages for the names.
+	messages, err := greetings.Hellos(names)
+	// If an error was returned, print it to the console and
+	// exit the program.
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	// If no error was returned, print the returned message
-	// to the console.
-	fmt.Println(secondMessage)
-	fmt.Println(message)
+	// If no error was returned, print the returned map of
+	// messages to the console.
+	fmt.Println(messages)
 }
