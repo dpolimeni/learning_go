@@ -45,9 +45,6 @@ func randomFormat() string {
 		"Great to see you, %v!",
 		"Hail, %v! Well met!",
 	}
-
-	var second uint8 = 1
-	fmt.Println(formats[second], "paperino")
 	// Return a randomly selected message format by specifying
 	// a random index for the slice of formats.
 	return formats[rand.Intn(len(formats))]
