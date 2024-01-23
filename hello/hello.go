@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"log"
-
 	"root/greetings"
 )
 
@@ -22,7 +21,13 @@ func main() {
 		log.Fatal(err)
 	}
 
+	secondMessage, err := greetings.Hello("")
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	// If no error was returned, print the returned message
 	// to the console.
+	fmt.Println(secondMessage)
 	fmt.Println(message)
 }
