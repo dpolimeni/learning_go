@@ -79,6 +79,12 @@ paths:
       consumes:
       - '*/*'
       description: Get person from db.
+      parameters:
+      - description: Person ID
+        in: path
+        name: id
+        required: true
+        type: integer
       produces:
       - application/json
       responses:

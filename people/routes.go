@@ -26,6 +26,7 @@ func GetPeople(c *fiber.Ctx) error {
 // @Success 200 {object} map[string]interface{}
 // @BasePath /api/v1/people
 // @Router /api/v1/people/{id} [get]
+// @Param id path int true "Person ID"
 func GetPerson(c *fiber.Ctx) error {
 	person_id := c.Params("id")
 	return c.SendString(person_id)

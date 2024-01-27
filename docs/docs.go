@@ -128,6 +128,15 @@ const docTemplate = `{
                     "People"
                 ],
                 "summary": "Get a single person.",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Person ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
