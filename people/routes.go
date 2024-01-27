@@ -1,6 +1,8 @@
 package people
 
 import (
+	"fmt"
+
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -32,17 +34,35 @@ func GetPerson(c *fiber.Ctx) error {
 	return c.SendString(person_id)
 }
 
+type Person struct {
+	Name string `json:"name" xml:"name" form:"name"`
+	Pass string `json:"pass" xml:"pass" form:"pass"`
+}
+
 // addPerson godoc
 // @Summary Add a person on DB.
 // @Description Add a person on DB.
 // @Tags People
-// @Accept */*
+// @Accept application/json
 // @Produce json
 // @Success 200 {object} map[string]interface{}
 // @BasePath /api/v1/people
 // @Router /api/v1/people [post]
+// @Param person body Person true "Person"
 func AddPerson(c *fiber.Ctx) error {
-	return c.SendString("Add Person")
+	// Create an instance of Person to store the parsed data
+	var p Person
+
+	// Parse the request body and bind it to the Person struct
+	if err := c.BodyParser(&p); err != nil {
+		// Handle parsing error
+		return c.Status(fiber.StatusBadRequest).SendString("Bad Request")
+	}
+
+	// Now, p will contain the values from the request body
+	fmt.Println(p)
+
+	return c.SendString("Person with name " + p.Name + " added to the database!")
 }
 
 // deletePerson godoc

@@ -1,4 +1,12 @@
 basePath: /
+definitions:
+  people.Person:
+    properties:
+      name:
+        type: string
+      pass:
+        type: string
+    type: object
 host: localhost:8080
 info:
   contact:
@@ -61,8 +69,15 @@ paths:
       - People
     post:
       consumes:
-      - '*/*'
+      - application/json
       description: Add a person on DB.
+      parameters:
+      - description: Person
+        in: body
+        name: person
+        required: true
+        schema:
+          $ref: '#/definitions/people.Person'
       produces:
       - application/json
       responses:

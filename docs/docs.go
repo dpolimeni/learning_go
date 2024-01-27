@@ -73,7 +73,7 @@ const docTemplate = `{
             "post": {
                 "description": "Add a person on DB.",
                 "consumes": [
-                    "*/*"
+                    "application/json"
                 ],
                 "produces": [
                     "application/json"
@@ -82,6 +82,17 @@ const docTemplate = `{
                     "People"
                 ],
                 "summary": "Add a person on DB.",
+                "parameters": [
+                    {
+                        "description": "Person",
+                        "name": "person",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/people.Person"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -145,6 +156,19 @@ const docTemplate = `{
                             "additionalProperties": true
                         }
                     }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "people.Person": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "pass": {
+                    "type": "string"
                 }
             }
         }
