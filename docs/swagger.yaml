@@ -28,4 +28,50 @@ paths:
       summary: Show the status of server.
       tags:
       - Root Base
+  /api/v1/people:
+    delete:
+      consumes:
+      - '*/*'
+      description: Delete a person on DB.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Delete a person.
+      tags:
+      - People
+    get:
+      consumes:
+      - '*/*'
+      description: Get person from db.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get a single person.
+      tags:
+      - People
+    post:
+      consumes:
+      - '*/*'
+      description: Add a person on DB.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Add a person on DB.
+      tags:
+      - People
 swagger: "2.0"

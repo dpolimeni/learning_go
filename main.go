@@ -25,8 +25,8 @@ func main() {
 
 	app := fiber.New()
 	people.SetupRoutes(app)
-	app.Get("/swagger/*", swagger.HandlerDefault)
 
+	app.Get("/swagger/*", swagger.HandlerDefault)
 	app.Get("/", HealthCheck)
 
 	app.Listen(":8080")
