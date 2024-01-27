@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"os"
 
+	"github.com/dpolimeni/fiber_app/common"
 	_ "github.com/dpolimeni/fiber_app/docs"
 	"github.com/dpolimeni/fiber_app/people"
 	"github.com/gofiber/fiber/v2"
@@ -23,6 +25,12 @@ func main() {
 
 	fmt.Println("Hello World")
 
+	err := common.LoadEnv()
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("Loaded env")
+	fmt.Println("PROD:", os.Getenv("PROD"), err)
 	app := fiber.New()
 	people.SetupRoutes(app)
 
