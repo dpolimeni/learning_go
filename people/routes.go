@@ -34,23 +34,18 @@ func GetPerson(c *fiber.Ctx) error {
 	return c.SendString(person_id)
 }
 
-type Person struct {
-	Name string `json:"name" xml:"name" form:"name"`
-	Pass string `json:"pass" xml:"pass" form:"pass"`
-}
-
 // addPerson godoc
 // @Summary Add a person on DB.
 // @Description Add a person on DB.
 // @Tags People
-// @Accept application/json
+// @Accept */*
 // @Produce json
 // @Success 200 {object} map[string]interface{}
 // @BasePath /api/v1/people
 // @Router /api/v1/people [post]
 // @Param person body Person true "Person"
 func AddPerson(c *fiber.Ctx) error {
-	// Create an instance of Person to store the parsed data
+
 	var p Person
 
 	// Parse the request body and bind it to the Person struct
