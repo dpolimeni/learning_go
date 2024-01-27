@@ -47,7 +47,7 @@ paths:
     get:
       consumes:
       - '*/*'
-      description: Get person from db.
+      description: Get people from db.
       produces:
       - application/json
       responses:
@@ -56,7 +56,7 @@ paths:
           schema:
             additionalProperties: true
             type: object
-      summary: Get a single person.
+      summary: Get all people.
       tags:
       - People
     post:
@@ -72,6 +72,22 @@ paths:
             additionalProperties: true
             type: object
       summary: Add a person on DB.
+      tags:
+      - People
+  /api/v1/people/{id}:
+    get:
+      consumes:
+      - '*/*'
+      description: Get person from db.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get a single person.
       tags:
       - People
 swagger: "2.0"

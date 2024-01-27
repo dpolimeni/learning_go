@@ -25,9 +25,10 @@ func GetPeople(c *fiber.Ctx) error {
 // @Produce json
 // @Success 200 {object} map[string]interface{}
 // @BasePath /api/v1/people
-// @Router /api/v1/people [get]
+// @Router /api/v1/people/{id} [get]
 func GetPerson(c *fiber.Ctx) error {
-	return c.SendString("Single Person")
+	person_id := c.Params("id")
+	return c.SendString(person_id)
 }
 
 // addPerson godoc
@@ -59,7 +60,7 @@ func DeletePerson(c *fiber.Ctx) error {
 func SetupRoutes(app *fiber.App) fiber.Router {
 	v1 := app.Group("/api/v1")
 	v1.Get("/people", GetPeople)
-	v1.Get("/people/:id", GetPerson)
+	v1.Get("/people/:id<int>", GetPerson)
 	v1.Post("/people", AddPerson)
 	v1.Delete("/people/:id", DeletePerson)
 	return v1

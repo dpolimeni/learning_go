@@ -49,7 +49,7 @@ const docTemplate = `{
         },
         "/api/v1/people": {
             "get": {
-                "description": "Get person from db.",
+                "description": "Get people from db.",
                 "consumes": [
                     "*/*"
                 ],
@@ -59,7 +59,7 @@ const docTemplate = `{
                 "tags": [
                     "People"
                 ],
-                "summary": "Get a single person.",
+                "summary": "Get all people.",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -104,6 +104,30 @@ const docTemplate = `{
                     "People"
                 ],
                 "summary": "Delete a person.",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/people/{id}": {
+            "get": {
+                "description": "Get person from db.",
+                "consumes": [
+                    "*/*"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "People"
+                ],
+                "summary": "Get a single person.",
                 "responses": {
                     "200": {
                         "description": "OK",
