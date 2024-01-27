@@ -38,7 +38,7 @@ func GetPerson(c *fiber.Ctx) error {
 // @Summary Add a person on DB.
 // @Description Add a person on DB.
 // @Tags People
-// @Accept */*
+// @Accept application/json
 // @Produce json
 // @Success 200 {object} map[string]interface{}
 // @BasePath /api/v1/people
