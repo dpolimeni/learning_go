@@ -33,12 +33,40 @@ var (
 		Columns:    UsersColumns,
 		PrimaryKey: []*schema.Column{UsersColumns[0]},
 	}
+	// EventsUsersColumns holds the columns for the "events_users" table.
+	EventsUsersColumns = []*schema.Column{
+		{Name: "events_id", Type: field.TypeInt32},
+		{Name: "user_id", Type: field.TypeInt},
+	}
+	// EventsUsersTable holds the schema information for the "events_users" table.
+	EventsUsersTable = &schema.Table{
+		Name:       "events_users",
+		Columns:    EventsUsersColumns,
+		PrimaryKey: []*schema.Column{EventsUsersColumns[0], EventsUsersColumns[1]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "events_users_events_id",
+				Columns:    []*schema.Column{EventsUsersColumns[0]},
+				RefColumns: []*schema.Column{EventsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "events_users_user_id",
+				Columns:    []*schema.Column{EventsUsersColumns[1]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		EventsTable,
 		UsersTable,
+		EventsUsersTable,
 	}
 )
 
 func init() {
+	EventsUsersTable.ForeignKeys[0].RefTable = EventsTable
+	EventsUsersTable.ForeignKeys[1].RefTable = UsersTable
 }

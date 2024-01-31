@@ -9,6 +9,7 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/dpolimeni/fiber_app/ent/events"
 	"github.com/dpolimeni/fiber_app/ent/user"
 )
 
@@ -37,6 +38,21 @@ func (uc *UserCreate) SetNillableName(s *string) *UserCreate {
 		uc.SetName(*s)
 	}
 	return uc
+}
+
+// AddEventIDs adds the "events" edge to the Events entity by IDs.
+func (uc *UserCreate) AddEventIDs(ids ...int32) *UserCreate {
+	uc.mutation.AddEventIDs(ids...)
+	return uc
+}
+
+// AddEvents adds the "events" edges to the Events entity.
+func (uc *UserCreate) AddEvents(e ...*Events) *UserCreate {
+	ids := make([]int32, len(e))
+	for i := range e {
+		ids[i] = e[i].ID
+	}
+	return uc.AddEventIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -126,6 +142,22 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	if value, ok := uc.mutation.Name(); ok {
 		_spec.SetField(user.FieldName, field.TypeString, value)
 		_node.Name = value
+	}
+	if nodes := uc.mutation.EventsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   user.EventsTable,
+			Columns: user.EventsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(events.FieldID, field.TypeInt32),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }

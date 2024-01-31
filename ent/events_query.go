@@ -4,6 +4,7 @@ package ent
 
 import (
 	"context"
+	"database/sql/driver"
 	"fmt"
 	"math"
 
@@ -12,6 +13,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/dpolimeni/fiber_app/ent/events"
 	"github.com/dpolimeni/fiber_app/ent/predicate"
+	"github.com/dpolimeni/fiber_app/ent/user"
 )
 
 // EventsQuery is the builder for querying Events entities.
@@ -21,6 +23,7 @@ type EventsQuery struct {
 	order      []events.OrderOption
 	inters     []Interceptor
 	predicates []predicate.Events
+	withUsers  *UserQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -55,6 +58,28 @@ func (eq *EventsQuery) Unique(unique bool) *EventsQuery {
 func (eq *EventsQuery) Order(o ...events.OrderOption) *EventsQuery {
 	eq.order = append(eq.order, o...)
 	return eq
+}
+
+// QueryUsers chains the current query on the "users" edge.
+func (eq *EventsQuery) QueryUsers() *UserQuery {
+	query := (&UserClient{config: eq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := eq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := eq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(events.Table, events.FieldID, selector),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, events.UsersTable, events.UsersPrimaryKey...),
+		)
+		fromU = sqlgraph.SetNeighbors(eq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
 }
 
 // First returns the first Events entity from the query.
@@ -249,10 +274,22 @@ func (eq *EventsQuery) Clone() *EventsQuery {
 		order:      append([]events.OrderOption{}, eq.order...),
 		inters:     append([]Interceptor{}, eq.inters...),
 		predicates: append([]predicate.Events{}, eq.predicates...),
+		withUsers:  eq.withUsers.Clone(),
 		// clone intermediate query.
 		sql:  eq.sql.Clone(),
 		path: eq.path,
 	}
+}
+
+// WithUsers tells the query-builder to eager-load the nodes that are connected to
+// the "users" edge. The optional arguments are used to configure the query builder of the edge.
+func (eq *EventsQuery) WithUsers(opts ...func(*UserQuery)) *EventsQuery {
+	query := (&UserClient{config: eq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	eq.withUsers = query
+	return eq
 }
 
 // GroupBy is used to group vertices by one or more fields/columns.
@@ -331,8 +368,11 @@ func (eq *EventsQuery) prepareQuery(ctx context.Context) error {
 
 func (eq *EventsQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Events, error) {
 	var (
-		nodes = []*Events{}
-		_spec = eq.querySpec()
+		nodes       = []*Events{}
+		_spec       = eq.querySpec()
+		loadedTypes = [1]bool{
+			eq.withUsers != nil,
+		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*Events).scanValues(nil, columns)
@@ -340,6 +380,7 @@ func (eq *EventsQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Event
 	_spec.Assign = func(columns []string, values []any) error {
 		node := &Events{config: eq.config}
 		nodes = append(nodes, node)
+		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
 	for i := range hooks {
@@ -351,7 +392,76 @@ func (eq *EventsQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Event
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+	if query := eq.withUsers; query != nil {
+		if err := eq.loadUsers(ctx, query, nodes,
+			func(n *Events) { n.Edges.Users = []*User{} },
+			func(n *Events, e *User) { n.Edges.Users = append(n.Edges.Users, e) }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
+}
+
+func (eq *EventsQuery) loadUsers(ctx context.Context, query *UserQuery, nodes []*Events, init func(*Events), assign func(*Events, *User)) error {
+	edgeIDs := make([]driver.Value, len(nodes))
+	byID := make(map[int32]*Events)
+	nids := make(map[int]map[*Events]struct{})
+	for i, node := range nodes {
+		edgeIDs[i] = node.ID
+		byID[node.ID] = node
+		if init != nil {
+			init(node)
+		}
+	}
+	query.Where(func(s *sql.Selector) {
+		joinT := sql.Table(events.UsersTable)
+		s.Join(joinT).On(s.C(user.FieldID), joinT.C(events.UsersPrimaryKey[1]))
+		s.Where(sql.InValues(joinT.C(events.UsersPrimaryKey[0]), edgeIDs...))
+		columns := s.SelectedColumns()
+		s.Select(joinT.C(events.UsersPrimaryKey[0]))
+		s.AppendSelect(columns...)
+		s.SetDistinct(false)
+	})
+	if err := query.prepareQuery(ctx); err != nil {
+		return err
+	}
+	qr := QuerierFunc(func(ctx context.Context, q Query) (Value, error) {
+		return query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
+			assign := spec.Assign
+			values := spec.ScanValues
+			spec.ScanValues = func(columns []string) ([]any, error) {
+				values, err := values(columns[1:])
+				if err != nil {
+					return nil, err
+				}
+				return append([]any{new(sql.NullInt64)}, values...), nil
+			}
+			spec.Assign = func(columns []string, values []any) error {
+				outValue := int32(values[0].(*sql.NullInt64).Int64)
+				inValue := int(values[1].(*sql.NullInt64).Int64)
+				if nids[inValue] == nil {
+					nids[inValue] = map[*Events]struct{}{byID[outValue]: {}}
+					return assign(columns[1:], values[1:])
+				}
+				nids[inValue][byID[outValue]] = struct{}{}
+				return nil
+			}
+		})
+	})
+	neighbors, err := withInterceptors[[]*User](ctx, query, qr, query.inters)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected "users" node returned %v`, n.ID)
+		}
+		for kn := range nodes {
+			assign(kn, n)
+		}
+	}
+	return nil
 }
 
 func (eq *EventsQuery) sqlCount(ctx context.Context) (int, error) {

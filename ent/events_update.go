@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/dpolimeni/fiber_app/ent/events"
 	"github.com/dpolimeni/fiber_app/ent/predicate"
+	"github.com/dpolimeni/fiber_app/ent/user"
 )
 
 // EventsUpdate is the builder for updating Events entities.
@@ -76,9 +77,45 @@ func (eu *EventsUpdate) SetNillableDescription(s *string) *EventsUpdate {
 	return eu
 }
 
+// AddUserIDs adds the "users" edge to the User entity by IDs.
+func (eu *EventsUpdate) AddUserIDs(ids ...int) *EventsUpdate {
+	eu.mutation.AddUserIDs(ids...)
+	return eu
+}
+
+// AddUsers adds the "users" edges to the User entity.
+func (eu *EventsUpdate) AddUsers(u ...*User) *EventsUpdate {
+	ids := make([]int, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return eu.AddUserIDs(ids...)
+}
+
 // Mutation returns the EventsMutation object of the builder.
 func (eu *EventsUpdate) Mutation() *EventsMutation {
 	return eu.mutation
+}
+
+// ClearUsers clears all "users" edges to the User entity.
+func (eu *EventsUpdate) ClearUsers() *EventsUpdate {
+	eu.mutation.ClearUsers()
+	return eu
+}
+
+// RemoveUserIDs removes the "users" edge to User entities by IDs.
+func (eu *EventsUpdate) RemoveUserIDs(ids ...int) *EventsUpdate {
+	eu.mutation.RemoveUserIDs(ids...)
+	return eu
+}
+
+// RemoveUsers removes "users" edges to User entities.
+func (eu *EventsUpdate) RemoveUsers(u ...*User) *EventsUpdate {
+	ids := make([]int, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return eu.RemoveUserIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -141,6 +178,51 @@ func (eu *EventsUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := eu.mutation.Description(); ok {
 		_spec.SetField(events.FieldDescription, field.TypeString, value)
+	}
+	if eu.mutation.UsersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   events.UsersTable,
+			Columns: events.UsersPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := eu.mutation.RemovedUsersIDs(); len(nodes) > 0 && !eu.mutation.UsersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   events.UsersTable,
+			Columns: events.UsersPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := eu.mutation.UsersIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   events.UsersTable,
+			Columns: events.UsersPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, eu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -211,9 +293,45 @@ func (euo *EventsUpdateOne) SetNillableDescription(s *string) *EventsUpdateOne {
 	return euo
 }
 
+// AddUserIDs adds the "users" edge to the User entity by IDs.
+func (euo *EventsUpdateOne) AddUserIDs(ids ...int) *EventsUpdateOne {
+	euo.mutation.AddUserIDs(ids...)
+	return euo
+}
+
+// AddUsers adds the "users" edges to the User entity.
+func (euo *EventsUpdateOne) AddUsers(u ...*User) *EventsUpdateOne {
+	ids := make([]int, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return euo.AddUserIDs(ids...)
+}
+
 // Mutation returns the EventsMutation object of the builder.
 func (euo *EventsUpdateOne) Mutation() *EventsMutation {
 	return euo.mutation
+}
+
+// ClearUsers clears all "users" edges to the User entity.
+func (euo *EventsUpdateOne) ClearUsers() *EventsUpdateOne {
+	euo.mutation.ClearUsers()
+	return euo
+}
+
+// RemoveUserIDs removes the "users" edge to User entities by IDs.
+func (euo *EventsUpdateOne) RemoveUserIDs(ids ...int) *EventsUpdateOne {
+	euo.mutation.RemoveUserIDs(ids...)
+	return euo
+}
+
+// RemoveUsers removes "users" edges to User entities.
+func (euo *EventsUpdateOne) RemoveUsers(u ...*User) *EventsUpdateOne {
+	ids := make([]int, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return euo.RemoveUserIDs(ids...)
 }
 
 // Where appends a list predicates to the EventsUpdate builder.
@@ -306,6 +424,51 @@ func (euo *EventsUpdateOne) sqlSave(ctx context.Context) (_node *Events, err err
 	}
 	if value, ok := euo.mutation.Description(); ok {
 		_spec.SetField(events.FieldDescription, field.TypeString, value)
+	}
+	if euo.mutation.UsersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   events.UsersTable,
+			Columns: events.UsersPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := euo.mutation.RemovedUsersIDs(); len(nodes) > 0 && !euo.mutation.UsersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   events.UsersTable,
+			Columns: events.UsersPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := euo.mutation.UsersIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   events.UsersTable,
+			Columns: events.UsersPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &Events{config: euo.config}
 	_spec.Assign = _node.assignValues
