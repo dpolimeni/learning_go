@@ -11,6 +11,9 @@ import (
 	"github.com/gofiber/swagger"
 )
 
+var err = common.LoadEnv()
+var DbClient = common.GetDB()
+
 // @title Fiber Example API
 // @version 2.0
 // @description This is a sample swagger for Fiber
@@ -24,12 +27,11 @@ import (
 func main() {
 
 	fmt.Println("Hello World")
-
-	err := common.LoadEnv()
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("Loaded env")
+	fmt.Println("Env loaded:", os.Getenv("password"), err)
+
 	fmt.Println("PROD:", os.Getenv("PROD"), err)
 	app := fiber.New()
 	people.SetupRoutes(app)

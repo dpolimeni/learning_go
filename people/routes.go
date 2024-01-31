@@ -1,15 +1,15 @@
 package people
 
 import (
+	"context"
 	"fmt"
 
-	"database/sql"
-
-	"os"
-
+	"github.com/dpolimeni/fiber_app/common"
 	"github.com/gofiber/fiber/v2"
 	_ "github.com/lib/pq"
 )
+
+var DbClient = common.GetDB()
 
 // getPeople godoc
 // @Summary Get all people.
@@ -21,50 +21,16 @@ import (
 // @BasePath /api/v1/people
 // @Router /api/v1/people [get]
 func GetPeople(c *fiber.Ctx) error {
-	const (
-		host   = "localhost"
-		port   = 5432
-		user   = "postgres"
-		dbname = "gotest"
-	)
-	var password = os.Getenv("password")
-	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
-		"password=%s dbname=%s sslmode=disable",
-		host, port, user, password, dbname)
-
-	db, err := sql.Open("postgres", psqlInfo)
+	// Make a query with the ent client
+	users, err := DbClient.User.Query().All(context.Background())
 	if err != nil {
 		panic(err)
 	}
+	fmt.Println(users)
+	// convert users to json to return on the api
 
-	err = db.Ping()
-	if err != nil {
-		panic(err)
-	}
-	defer db.Close()
-
-	rows, err := db.Query("SELECT name, surname FROM pippo")
-	if err != nil {
-		fmt.Println("Error executing query:", err)
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var name, surname string
-		err := rows.Scan(&name, &surname)
-		if err != nil {
-			fmt.Println("Error scanning row:", err)
-			return c.SendString("Error scanning rows:")
-		}
-		fmt.Printf("name: %s, surname: %s\n", name, surname)
-	}
-
-	if err := rows.Err(); err != nil {
-		fmt.Println("Error retrieving rows:", err)
-		return c.SendString("Error retrieving rows:")
-	}
-
-	return c.SendString("All People")
+	// return the JSON
+	return c.JSON(users)
 }
 
 // getPerson godoc
