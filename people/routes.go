@@ -3,6 +3,7 @@ package people
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/dpolimeni/fiber_app/common"
 	"github.com/gofiber/fiber/v2"
@@ -45,7 +46,16 @@ func GetPeople(c *fiber.Ctx) error {
 // @Param id path int true "Person ID"
 func GetPerson(c *fiber.Ctx) error {
 	person_id := c.Params("id")
-	return c.SendString(person_id)
+	number, err := strconv.Atoi(person_id)
+	if err != nil {
+		return c.SendString("Bad Request") // , fiber.StatusInternalServerError
+	}
+	user, err := DbClient.User.Get(context.Background(), number)
+	if err != nil {
+		formattedString := fmt.Sprintf("No user with id %d", number)
+		return c.SendString(formattedString) // , fiber.StatusBadRequest
+	}
+	return c.JSON(user)
 }
 
 // addPerson godoc
