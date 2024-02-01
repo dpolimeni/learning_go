@@ -52,7 +52,7 @@ func GetPerson(c *fiber.Ctx) error {
 		formattedString := fmt.Sprintf("No user with id %d", number)
 		return c.Status(fiber.StatusBadRequest).JSON(formattedString) // , fiber.StatusBadRequest
 	}
-	return c.JSON(user)
+	return c.Status(fiber.StatusAccepted).JSON(user)
 }
 
 // addPerson godoc
