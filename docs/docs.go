@@ -164,6 +164,9 @@ const docTemplate = `{
         "people.Person": {
             "type": "object",
             "properties": {
+                "age": {
+                    "type": "integer"
+                },
                 "name": {
                     "type": "string"
                 },

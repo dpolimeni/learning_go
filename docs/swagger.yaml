@@ -2,6 +2,8 @@ basePath: /
 definitions:
   people.Person:
     properties:
+      age:
+        type: integer
       name:
         type: string
       pass:

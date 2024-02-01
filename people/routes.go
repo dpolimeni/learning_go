@@ -72,13 +72,18 @@ func AddPerson(c *fiber.Ctx) error {
 	// Parse the request body and bind it to the Person struct
 	if err := c.BodyParser(&p); err != nil {
 		// Handle parsing error
-		return c.Status(fiber.StatusBadRequest).SendString("Bad Request")
+		return c.Status(fiber.StatusInternalServerError).SendString("Error parsing the request body")
 	}
-
 	// Now, p will contain the values from the request body
 	fmt.Println(p)
 
-	return c.SendString("Person with name " + p.Name + " added to the database!")
+	// Create a new person entity with the values from the request body
+	person, err := DbClient.User.Create().SetAge(p.Age).SetName(p.Name).Save(context.Background())
+	if err != nil {
+		// Handle error
+		return c.Status(fiber.StatusInternalServerError).SendString("Error creating the person")
+	}
+	return c.SendString("Person with name " + person.Name + " added to the database!")
 }
 
 // deletePerson godoc
