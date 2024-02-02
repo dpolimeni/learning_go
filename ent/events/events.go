@@ -20,6 +20,8 @@ const (
 	FieldDescription = "description"
 	// EdgeUsers holds the string denoting the users edge name in mutations.
 	EdgeUsers = "users"
+	// EdgeReservations holds the string denoting the reservations edge name in mutations.
+	EdgeReservations = "reservations"
 	// Table holds the table name of the events in the database.
 	Table = "events"
 	// UsersTable is the table that holds the users relation/edge. The primary key declared below.
@@ -27,6 +29,13 @@ const (
 	// UsersInverseTable is the table name for the User entity.
 	// It exists in this package in order to avoid circular dependency with the "user" package.
 	UsersInverseTable = "users"
+	// ReservationsTable is the table that holds the reservations relation/edge.
+	ReservationsTable = "reservations"
+	// ReservationsInverseTable is the table name for the Reservations entity.
+	// It exists in this package in order to avoid circular dependency with the "reservations" package.
+	ReservationsInverseTable = "reservations"
+	// ReservationsColumn is the table column denoting the reservations relation/edge.
+	ReservationsColumn = "events_reservations"
 )
 
 // Columns holds all SQL columns for events fields.
@@ -100,10 +109,31 @@ func ByUsers(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newUsersStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByReservationsCount orders the results by reservations count.
+func ByReservationsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newReservationsStep(), opts...)
+	}
+}
+
+// ByReservations orders the results by reservations terms.
+func ByReservations(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newReservationsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newUsersStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(UsersInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2M, false, UsersTable, UsersPrimaryKey...),
+	)
+}
+func newReservationsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ReservationsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, ReservationsTable, ReservationsColumn),
 	)
 }

@@ -7,11 +7,13 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"time"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/dpolimeni/fiber_app/ent/events"
 	"github.com/dpolimeni/fiber_app/ent/predicate"
+	"github.com/dpolimeni/fiber_app/ent/reservations"
 	"github.com/dpolimeni/fiber_app/ent/user"
 )
 
@@ -24,27 +26,31 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
-	TypeEvents = "Events"
-	TypeUser   = "User"
+	TypeEvents       = "Events"
+	TypeReservations = "Reservations"
+	TypeUser         = "User"
 )
 
 // EventsMutation represents an operation that mutates the Events nodes in the graph.
 type EventsMutation struct {
 	config
-	op            Op
-	typ           string
-	id            *int32
-	name          *string
-	capacity      *int16
-	addcapacity   *int16
-	description   *string
-	clearedFields map[string]struct{}
-	users         map[int]struct{}
-	removedusers  map[int]struct{}
-	clearedusers  bool
-	done          bool
-	oldValue      func(context.Context) (*Events, error)
-	predicates    []predicate.Events
+	op                  Op
+	typ                 string
+	id                  *int32
+	name                *string
+	capacity            *int16
+	addcapacity         *int16
+	description         *string
+	clearedFields       map[string]struct{}
+	users               map[int]struct{}
+	removedusers        map[int]struct{}
+	clearedusers        bool
+	reservations        map[string]struct{}
+	removedreservations map[string]struct{}
+	clearedreservations bool
+	done                bool
+	oldValue            func(context.Context) (*Events, error)
+	predicates          []predicate.Events
 }
 
 var _ ent.Mutation = (*EventsMutation)(nil)
@@ -333,6 +339,60 @@ func (m *EventsMutation) ResetUsers() {
 	m.removedusers = nil
 }
 
+// AddReservationIDs adds the "reservations" edge to the Reservations entity by ids.
+func (m *EventsMutation) AddReservationIDs(ids ...string) {
+	if m.reservations == nil {
+		m.reservations = make(map[string]struct{})
+	}
+	for i := range ids {
+		m.reservations[ids[i]] = struct{}{}
+	}
+}
+
+// ClearReservations clears the "reservations" edge to the Reservations entity.
+func (m *EventsMutation) ClearReservations() {
+	m.clearedreservations = true
+}
+
+// ReservationsCleared reports if the "reservations" edge to the Reservations entity was cleared.
+func (m *EventsMutation) ReservationsCleared() bool {
+	return m.clearedreservations
+}
+
+// RemoveReservationIDs removes the "reservations" edge to the Reservations entity by IDs.
+func (m *EventsMutation) RemoveReservationIDs(ids ...string) {
+	if m.removedreservations == nil {
+		m.removedreservations = make(map[string]struct{})
+	}
+	for i := range ids {
+		delete(m.reservations, ids[i])
+		m.removedreservations[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedReservations returns the removed IDs of the "reservations" edge to the Reservations entity.
+func (m *EventsMutation) RemovedReservationsIDs() (ids []string) {
+	for id := range m.removedreservations {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ReservationsIDs returns the "reservations" edge IDs in the mutation.
+func (m *EventsMutation) ReservationsIDs() (ids []string) {
+	for id := range m.reservations {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetReservations resets all changes to the "reservations" edge.
+func (m *EventsMutation) ResetReservations() {
+	m.reservations = nil
+	m.clearedreservations = false
+	m.removedreservations = nil
+}
+
 // Where appends a list predicates to the EventsMutation builder.
 func (m *EventsMutation) Where(ps ...predicate.Events) {
 	m.predicates = append(m.predicates, ps...)
@@ -515,9 +575,12 @@ func (m *EventsMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *EventsMutation) AddedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.users != nil {
 		edges = append(edges, events.EdgeUsers)
+	}
+	if m.reservations != nil {
+		edges = append(edges, events.EdgeReservations)
 	}
 	return edges
 }
@@ -532,15 +595,24 @@ func (m *EventsMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case events.EdgeReservations:
+		ids := make([]ent.Value, 0, len(m.reservations))
+		for id := range m.reservations {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *EventsMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.removedusers != nil {
 		edges = append(edges, events.EdgeUsers)
+	}
+	if m.removedreservations != nil {
+		edges = append(edges, events.EdgeReservations)
 	}
 	return edges
 }
@@ -555,15 +627,24 @@ func (m *EventsMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case events.EdgeReservations:
+		ids := make([]ent.Value, 0, len(m.removedreservations))
+		for id := range m.removedreservations {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *EventsMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.clearedusers {
 		edges = append(edges, events.EdgeUsers)
+	}
+	if m.clearedreservations {
+		edges = append(edges, events.EdgeReservations)
 	}
 	return edges
 }
@@ -574,6 +655,8 @@ func (m *EventsMutation) EdgeCleared(name string) bool {
 	switch name {
 	case events.EdgeUsers:
 		return m.clearedusers
+	case events.EdgeReservations:
+		return m.clearedreservations
 	}
 	return false
 }
@@ -593,26 +676,490 @@ func (m *EventsMutation) ResetEdge(name string) error {
 	case events.EdgeUsers:
 		m.ResetUsers()
 		return nil
+	case events.EdgeReservations:
+		m.ResetReservations()
+		return nil
 	}
 	return fmt.Errorf("unknown Events edge %s", name)
+}
+
+// ReservationsMutation represents an operation that mutates the Reservations nodes in the graph.
+type ReservationsMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *string
+	created_at    *time.Time
+	clearedFields map[string]struct{}
+	user          *int
+	cleareduser   bool
+	event         *int32
+	clearedevent  bool
+	done          bool
+	oldValue      func(context.Context) (*Reservations, error)
+	predicates    []predicate.Reservations
+}
+
+var _ ent.Mutation = (*ReservationsMutation)(nil)
+
+// reservationsOption allows management of the mutation configuration using functional options.
+type reservationsOption func(*ReservationsMutation)
+
+// newReservationsMutation creates new mutation for the Reservations entity.
+func newReservationsMutation(c config, op Op, opts ...reservationsOption) *ReservationsMutation {
+	m := &ReservationsMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeReservations,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withReservationsID sets the ID field of the mutation.
+func withReservationsID(id string) reservationsOption {
+	return func(m *ReservationsMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Reservations
+		)
+		m.oldValue = func(ctx context.Context) (*Reservations, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Reservations.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withReservations sets the old Reservations of the mutation.
+func withReservations(node *Reservations) reservationsOption {
+	return func(m *ReservationsMutation) {
+		m.oldValue = func(context.Context) (*Reservations, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m ReservationsMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m ReservationsMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Reservations entities.
+func (m *ReservationsMutation) SetID(id string) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *ReservationsMutation) ID() (id string, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *ReservationsMutation) IDs(ctx context.Context) ([]string, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []string{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Reservations.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *ReservationsMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *ReservationsMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the Reservations entity.
+// If the Reservations object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ReservationsMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *ReservationsMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUserID sets the "user" edge to the User entity by id.
+func (m *ReservationsMutation) SetUserID(id int) {
+	m.user = &id
+}
+
+// ClearUser clears the "user" edge to the User entity.
+func (m *ReservationsMutation) ClearUser() {
+	m.cleareduser = true
+}
+
+// UserCleared reports if the "user" edge to the User entity was cleared.
+func (m *ReservationsMutation) UserCleared() bool {
+	return m.cleareduser
+}
+
+// UserID returns the "user" edge ID in the mutation.
+func (m *ReservationsMutation) UserID() (id int, exists bool) {
+	if m.user != nil {
+		return *m.user, true
+	}
+	return
+}
+
+// UserIDs returns the "user" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// UserID instead. It exists only for internal usage by the builders.
+func (m *ReservationsMutation) UserIDs() (ids []int) {
+	if id := m.user; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetUser resets all changes to the "user" edge.
+func (m *ReservationsMutation) ResetUser() {
+	m.user = nil
+	m.cleareduser = false
+}
+
+// SetEventID sets the "event" edge to the Events entity by id.
+func (m *ReservationsMutation) SetEventID(id int32) {
+	m.event = &id
+}
+
+// ClearEvent clears the "event" edge to the Events entity.
+func (m *ReservationsMutation) ClearEvent() {
+	m.clearedevent = true
+}
+
+// EventCleared reports if the "event" edge to the Events entity was cleared.
+func (m *ReservationsMutation) EventCleared() bool {
+	return m.clearedevent
+}
+
+// EventID returns the "event" edge ID in the mutation.
+func (m *ReservationsMutation) EventID() (id int32, exists bool) {
+	if m.event != nil {
+		return *m.event, true
+	}
+	return
+}
+
+// EventIDs returns the "event" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// EventID instead. It exists only for internal usage by the builders.
+func (m *ReservationsMutation) EventIDs() (ids []int32) {
+	if id := m.event; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetEvent resets all changes to the "event" edge.
+func (m *ReservationsMutation) ResetEvent() {
+	m.event = nil
+	m.clearedevent = false
+}
+
+// Where appends a list predicates to the ReservationsMutation builder.
+func (m *ReservationsMutation) Where(ps ...predicate.Reservations) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the ReservationsMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *ReservationsMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Reservations, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *ReservationsMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *ReservationsMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Reservations).
+func (m *ReservationsMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *ReservationsMutation) Fields() []string {
+	fields := make([]string, 0, 1)
+	if m.created_at != nil {
+		fields = append(fields, reservations.FieldCreatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *ReservationsMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case reservations.FieldCreatedAt:
+		return m.CreatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *ReservationsMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case reservations.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown Reservations field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ReservationsMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case reservations.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Reservations field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *ReservationsMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *ReservationsMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ReservationsMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown Reservations numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *ReservationsMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *ReservationsMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *ReservationsMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown Reservations nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *ReservationsMutation) ResetField(name string) error {
+	switch name {
+	case reservations.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown Reservations field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *ReservationsMutation) AddedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.user != nil {
+		edges = append(edges, reservations.EdgeUser)
+	}
+	if m.event != nil {
+		edges = append(edges, reservations.EdgeEvent)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *ReservationsMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case reservations.EdgeUser:
+		if id := m.user; id != nil {
+			return []ent.Value{*id}
+		}
+	case reservations.EdgeEvent:
+		if id := m.event; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *ReservationsMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 2)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *ReservationsMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *ReservationsMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.cleareduser {
+		edges = append(edges, reservations.EdgeUser)
+	}
+	if m.clearedevent {
+		edges = append(edges, reservations.EdgeEvent)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *ReservationsMutation) EdgeCleared(name string) bool {
+	switch name {
+	case reservations.EdgeUser:
+		return m.cleareduser
+	case reservations.EdgeEvent:
+		return m.clearedevent
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *ReservationsMutation) ClearEdge(name string) error {
+	switch name {
+	case reservations.EdgeUser:
+		m.ClearUser()
+		return nil
+	case reservations.EdgeEvent:
+		m.ClearEvent()
+		return nil
+	}
+	return fmt.Errorf("unknown Reservations unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *ReservationsMutation) ResetEdge(name string) error {
+	switch name {
+	case reservations.EdgeUser:
+		m.ResetUser()
+		return nil
+	case reservations.EdgeEvent:
+		m.ResetEvent()
+		return nil
+	}
+	return fmt.Errorf("unknown Reservations edge %s", name)
 }
 
 // UserMutation represents an operation that mutates the User nodes in the graph.
 type UserMutation struct {
 	config
-	op            Op
-	typ           string
-	id            *int
-	age           *int
-	addage        *int
-	name          *string
-	clearedFields map[string]struct{}
-	events        map[int32]struct{}
-	removedevents map[int32]struct{}
-	clearedevents bool
-	done          bool
-	oldValue      func(context.Context) (*User, error)
-	predicates    []predicate.User
+	op                  Op
+	typ                 string
+	id                  *int
+	age                 *int
+	addage              *int
+	name                *string
+	clearedFields       map[string]struct{}
+	events              map[int32]struct{}
+	removedevents       map[int32]struct{}
+	clearedevents       bool
+	reservations        map[string]struct{}
+	removedreservations map[string]struct{}
+	clearedreservations bool
+	done                bool
+	oldValue            func(context.Context) (*User, error)
+	predicates          []predicate.User
 }
 
 var _ ent.Mutation = (*UserMutation)(nil)
@@ -859,6 +1406,60 @@ func (m *UserMutation) ResetEvents() {
 	m.removedevents = nil
 }
 
+// AddReservationIDs adds the "reservations" edge to the Reservations entity by ids.
+func (m *UserMutation) AddReservationIDs(ids ...string) {
+	if m.reservations == nil {
+		m.reservations = make(map[string]struct{})
+	}
+	for i := range ids {
+		m.reservations[ids[i]] = struct{}{}
+	}
+}
+
+// ClearReservations clears the "reservations" edge to the Reservations entity.
+func (m *UserMutation) ClearReservations() {
+	m.clearedreservations = true
+}
+
+// ReservationsCleared reports if the "reservations" edge to the Reservations entity was cleared.
+func (m *UserMutation) ReservationsCleared() bool {
+	return m.clearedreservations
+}
+
+// RemoveReservationIDs removes the "reservations" edge to the Reservations entity by IDs.
+func (m *UserMutation) RemoveReservationIDs(ids ...string) {
+	if m.removedreservations == nil {
+		m.removedreservations = make(map[string]struct{})
+	}
+	for i := range ids {
+		delete(m.reservations, ids[i])
+		m.removedreservations[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedReservations returns the removed IDs of the "reservations" edge to the Reservations entity.
+func (m *UserMutation) RemovedReservationsIDs() (ids []string) {
+	for id := range m.removedreservations {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ReservationsIDs returns the "reservations" edge IDs in the mutation.
+func (m *UserMutation) ReservationsIDs() (ids []string) {
+	for id := range m.reservations {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetReservations resets all changes to the "reservations" edge.
+func (m *UserMutation) ResetReservations() {
+	m.reservations = nil
+	m.clearedreservations = false
+	m.removedreservations = nil
+}
+
 // Where appends a list predicates to the UserMutation builder.
 func (m *UserMutation) Where(ps ...predicate.User) {
 	m.predicates = append(m.predicates, ps...)
@@ -1024,9 +1625,12 @@ func (m *UserMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *UserMutation) AddedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.events != nil {
 		edges = append(edges, user.EdgeEvents)
+	}
+	if m.reservations != nil {
+		edges = append(edges, user.EdgeReservations)
 	}
 	return edges
 }
@@ -1041,15 +1645,24 @@ func (m *UserMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case user.EdgeReservations:
+		ids := make([]ent.Value, 0, len(m.reservations))
+		for id := range m.reservations {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *UserMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.removedevents != nil {
 		edges = append(edges, user.EdgeEvents)
+	}
+	if m.removedreservations != nil {
+		edges = append(edges, user.EdgeReservations)
 	}
 	return edges
 }
@@ -1064,15 +1677,24 @@ func (m *UserMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case user.EdgeReservations:
+		ids := make([]ent.Value, 0, len(m.removedreservations))
+		for id := range m.removedreservations {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *UserMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.clearedevents {
 		edges = append(edges, user.EdgeEvents)
+	}
+	if m.clearedreservations {
+		edges = append(edges, user.EdgeReservations)
 	}
 	return edges
 }
@@ -1083,6 +1705,8 @@ func (m *UserMutation) EdgeCleared(name string) bool {
 	switch name {
 	case user.EdgeEvents:
 		return m.clearedevents
+	case user.EdgeReservations:
+		return m.clearedreservations
 	}
 	return false
 }
@@ -1101,6 +1725,9 @@ func (m *UserMutation) ResetEdge(name string) error {
 	switch name {
 	case user.EdgeEvents:
 		m.ResetEvents()
+		return nil
+	case user.EdgeReservations:
+		m.ResetReservations()
 		return nil
 	}
 	return fmt.Errorf("unknown User edge %s", name)

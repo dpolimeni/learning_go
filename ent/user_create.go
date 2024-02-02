@@ -10,6 +10,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/dpolimeni/fiber_app/ent/events"
+	"github.com/dpolimeni/fiber_app/ent/reservations"
 	"github.com/dpolimeni/fiber_app/ent/user"
 )
 
@@ -53,6 +54,21 @@ func (uc *UserCreate) AddEvents(e ...*Events) *UserCreate {
 		ids[i] = e[i].ID
 	}
 	return uc.AddEventIDs(ids...)
+}
+
+// AddReservationIDs adds the "reservations" edge to the Reservations entity by IDs.
+func (uc *UserCreate) AddReservationIDs(ids ...string) *UserCreate {
+	uc.mutation.AddReservationIDs(ids...)
+	return uc
+}
+
+// AddReservations adds the "reservations" edges to the Reservations entity.
+func (uc *UserCreate) AddReservations(r ...*Reservations) *UserCreate {
+	ids := make([]string, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return uc.AddReservationIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -152,6 +168,22 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(events.FieldID, field.TypeInt32),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := uc.mutation.ReservationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.ReservationsTable,
+			Columns: []string{user.ReservationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(reservations.FieldID, field.TypeString),
 			},
 		}
 		for _, k := range nodes {

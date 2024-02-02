@@ -261,6 +261,29 @@ func HasUsersWith(preds ...predicate.User) predicate.Events {
 	})
 }
 
+// HasReservations applies the HasEdge predicate on the "reservations" edge.
+func HasReservations() predicate.Events {
+	return predicate.Events(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, ReservationsTable, ReservationsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasReservationsWith applies the HasEdge predicate on the "reservations" edge with a given conditions (other predicates).
+func HasReservationsWith(preds ...predicate.Reservations) predicate.Events {
+	return predicate.Events(func(s *sql.Selector) {
+		step := newReservationsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Events) predicate.Events {
 	return predicate.Events(sql.AndPredicates(predicates...))

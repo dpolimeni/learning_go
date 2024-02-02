@@ -13,17 +13,19 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/dpolimeni/fiber_app/ent/events"
 	"github.com/dpolimeni/fiber_app/ent/predicate"
+	"github.com/dpolimeni/fiber_app/ent/reservations"
 	"github.com/dpolimeni/fiber_app/ent/user"
 )
 
 // EventsQuery is the builder for querying Events entities.
 type EventsQuery struct {
 	config
-	ctx        *QueryContext
-	order      []events.OrderOption
-	inters     []Interceptor
-	predicates []predicate.Events
-	withUsers  *UserQuery
+	ctx              *QueryContext
+	order            []events.OrderOption
+	inters           []Interceptor
+	predicates       []predicate.Events
+	withUsers        *UserQuery
+	withReservations *ReservationsQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -75,6 +77,28 @@ func (eq *EventsQuery) QueryUsers() *UserQuery {
 			sqlgraph.From(events.Table, events.FieldID, selector),
 			sqlgraph.To(user.Table, user.FieldID),
 			sqlgraph.Edge(sqlgraph.M2M, false, events.UsersTable, events.UsersPrimaryKey...),
+		)
+		fromU = sqlgraph.SetNeighbors(eq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryReservations chains the current query on the "reservations" edge.
+func (eq *EventsQuery) QueryReservations() *ReservationsQuery {
+	query := (&ReservationsClient{config: eq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := eq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := eq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(events.Table, events.FieldID, selector),
+			sqlgraph.To(reservations.Table, reservations.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, events.ReservationsTable, events.ReservationsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(eq.driver.Dialect(), step)
 		return fromU, nil
@@ -269,12 +293,13 @@ func (eq *EventsQuery) Clone() *EventsQuery {
 		return nil
 	}
 	return &EventsQuery{
-		config:     eq.config,
-		ctx:        eq.ctx.Clone(),
-		order:      append([]events.OrderOption{}, eq.order...),
-		inters:     append([]Interceptor{}, eq.inters...),
-		predicates: append([]predicate.Events{}, eq.predicates...),
-		withUsers:  eq.withUsers.Clone(),
+		config:           eq.config,
+		ctx:              eq.ctx.Clone(),
+		order:            append([]events.OrderOption{}, eq.order...),
+		inters:           append([]Interceptor{}, eq.inters...),
+		predicates:       append([]predicate.Events{}, eq.predicates...),
+		withUsers:        eq.withUsers.Clone(),
+		withReservations: eq.withReservations.Clone(),
 		// clone intermediate query.
 		sql:  eq.sql.Clone(),
 		path: eq.path,
@@ -289,6 +314,17 @@ func (eq *EventsQuery) WithUsers(opts ...func(*UserQuery)) *EventsQuery {
 		opt(query)
 	}
 	eq.withUsers = query
+	return eq
+}
+
+// WithReservations tells the query-builder to eager-load the nodes that are connected to
+// the "reservations" edge. The optional arguments are used to configure the query builder of the edge.
+func (eq *EventsQuery) WithReservations(opts ...func(*ReservationsQuery)) *EventsQuery {
+	query := (&ReservationsClient{config: eq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	eq.withReservations = query
 	return eq
 }
 
@@ -370,8 +406,9 @@ func (eq *EventsQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Event
 	var (
 		nodes       = []*Events{}
 		_spec       = eq.querySpec()
-		loadedTypes = [1]bool{
+		loadedTypes = [2]bool{
 			eq.withUsers != nil,
+			eq.withReservations != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -396,6 +433,13 @@ func (eq *EventsQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Event
 		if err := eq.loadUsers(ctx, query, nodes,
 			func(n *Events) { n.Edges.Users = []*User{} },
 			func(n *Events, e *User) { n.Edges.Users = append(n.Edges.Users, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := eq.withReservations; query != nil {
+		if err := eq.loadReservations(ctx, query, nodes,
+			func(n *Events) { n.Edges.Reservations = []*Reservations{} },
+			func(n *Events, e *Reservations) { n.Edges.Reservations = append(n.Edges.Reservations, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -460,6 +504,37 @@ func (eq *EventsQuery) loadUsers(ctx context.Context, query *UserQuery, nodes []
 		for kn := range nodes {
 			assign(kn, n)
 		}
+	}
+	return nil
+}
+func (eq *EventsQuery) loadReservations(ctx context.Context, query *ReservationsQuery, nodes []*Events, init func(*Events), assign func(*Events, *Reservations)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int32]*Events)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.Reservations(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(events.ReservationsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.events_reservations
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "events_reservations" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "events_reservations" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
 	}
 	return nil
 }

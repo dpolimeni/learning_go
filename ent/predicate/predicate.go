@@ -9,5 +9,8 @@ import (
 // Events is the predicate function for events builders.
 type Events func(*sql.Selector)
 
+// Reservations is the predicate function for reservations builders.
+type Reservations func(*sql.Selector)
+
 // User is the predicate function for user builders.
 type User func(*sql.Selector)

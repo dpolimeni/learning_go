@@ -30,9 +30,11 @@ type User struct {
 type UserEdges struct {
 	// Events holds the value of the events edge.
 	Events []*Events `json:"events,omitempty"`
+	// Reservations holds the value of the reservations edge.
+	Reservations []*Reservations `json:"reservations,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 }
 
 // EventsOrErr returns the Events value or an error if the edge
@@ -42,6 +44,15 @@ func (e UserEdges) EventsOrErr() ([]*Events, error) {
 		return e.Events, nil
 	}
 	return nil, &NotLoadedError{edge: "events"}
+}
+
+// ReservationsOrErr returns the Reservations value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) ReservationsOrErr() ([]*Reservations, error) {
+	if e.loadedTypes[1] {
+		return e.Reservations, nil
+	}
+	return nil, &NotLoadedError{edge: "reservations"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -102,6 +113,11 @@ func (u *User) Value(name string) (ent.Value, error) {
 // QueryEvents queries the "events" edge of the User entity.
 func (u *User) QueryEvents() *EventsQuery {
 	return NewUserClient(u.config).QueryEvents(u)
+}
+
+// QueryReservations queries the "reservations" edge of the User entity.
+func (u *User) QueryReservations() *ReservationsQuery {
+	return NewUserClient(u.config).QueryReservations(u)
 }
 
 // Update returns a builder for updating this User.

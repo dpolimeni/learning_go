@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/dpolimeni/fiber_app/ent/events"
 	"github.com/dpolimeni/fiber_app/ent/predicate"
+	"github.com/dpolimeni/fiber_app/ent/reservations"
 	"github.com/dpolimeni/fiber_app/ent/user"
 )
 
@@ -92,6 +93,21 @@ func (eu *EventsUpdate) AddUsers(u ...*User) *EventsUpdate {
 	return eu.AddUserIDs(ids...)
 }
 
+// AddReservationIDs adds the "reservations" edge to the Reservations entity by IDs.
+func (eu *EventsUpdate) AddReservationIDs(ids ...string) *EventsUpdate {
+	eu.mutation.AddReservationIDs(ids...)
+	return eu
+}
+
+// AddReservations adds the "reservations" edges to the Reservations entity.
+func (eu *EventsUpdate) AddReservations(r ...*Reservations) *EventsUpdate {
+	ids := make([]string, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return eu.AddReservationIDs(ids...)
+}
+
 // Mutation returns the EventsMutation object of the builder.
 func (eu *EventsUpdate) Mutation() *EventsMutation {
 	return eu.mutation
@@ -116,6 +132,27 @@ func (eu *EventsUpdate) RemoveUsers(u ...*User) *EventsUpdate {
 		ids[i] = u[i].ID
 	}
 	return eu.RemoveUserIDs(ids...)
+}
+
+// ClearReservations clears all "reservations" edges to the Reservations entity.
+func (eu *EventsUpdate) ClearReservations() *EventsUpdate {
+	eu.mutation.ClearReservations()
+	return eu
+}
+
+// RemoveReservationIDs removes the "reservations" edge to Reservations entities by IDs.
+func (eu *EventsUpdate) RemoveReservationIDs(ids ...string) *EventsUpdate {
+	eu.mutation.RemoveReservationIDs(ids...)
+	return eu
+}
+
+// RemoveReservations removes "reservations" edges to Reservations entities.
+func (eu *EventsUpdate) RemoveReservations(r ...*Reservations) *EventsUpdate {
+	ids := make([]string, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return eu.RemoveReservationIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -224,6 +261,51 @@ func (eu *EventsUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if eu.mutation.ReservationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   events.ReservationsTable,
+			Columns: []string{events.ReservationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(reservations.FieldID, field.TypeString),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := eu.mutation.RemovedReservationsIDs(); len(nodes) > 0 && !eu.mutation.ReservationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   events.ReservationsTable,
+			Columns: []string{events.ReservationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(reservations.FieldID, field.TypeString),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := eu.mutation.ReservationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   events.ReservationsTable,
+			Columns: []string{events.ReservationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(reservations.FieldID, field.TypeString),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, eu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{events.Label}
@@ -308,6 +390,21 @@ func (euo *EventsUpdateOne) AddUsers(u ...*User) *EventsUpdateOne {
 	return euo.AddUserIDs(ids...)
 }
 
+// AddReservationIDs adds the "reservations" edge to the Reservations entity by IDs.
+func (euo *EventsUpdateOne) AddReservationIDs(ids ...string) *EventsUpdateOne {
+	euo.mutation.AddReservationIDs(ids...)
+	return euo
+}
+
+// AddReservations adds the "reservations" edges to the Reservations entity.
+func (euo *EventsUpdateOne) AddReservations(r ...*Reservations) *EventsUpdateOne {
+	ids := make([]string, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return euo.AddReservationIDs(ids...)
+}
+
 // Mutation returns the EventsMutation object of the builder.
 func (euo *EventsUpdateOne) Mutation() *EventsMutation {
 	return euo.mutation
@@ -332,6 +429,27 @@ func (euo *EventsUpdateOne) RemoveUsers(u ...*User) *EventsUpdateOne {
 		ids[i] = u[i].ID
 	}
 	return euo.RemoveUserIDs(ids...)
+}
+
+// ClearReservations clears all "reservations" edges to the Reservations entity.
+func (euo *EventsUpdateOne) ClearReservations() *EventsUpdateOne {
+	euo.mutation.ClearReservations()
+	return euo
+}
+
+// RemoveReservationIDs removes the "reservations" edge to Reservations entities by IDs.
+func (euo *EventsUpdateOne) RemoveReservationIDs(ids ...string) *EventsUpdateOne {
+	euo.mutation.RemoveReservationIDs(ids...)
+	return euo
+}
+
+// RemoveReservations removes "reservations" edges to Reservations entities.
+func (euo *EventsUpdateOne) RemoveReservations(r ...*Reservations) *EventsUpdateOne {
+	ids := make([]string, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return euo.RemoveReservationIDs(ids...)
 }
 
 // Where appends a list predicates to the EventsUpdate builder.
@@ -463,6 +581,51 @@ func (euo *EventsUpdateOne) sqlSave(ctx context.Context) (_node *Events, err err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if euo.mutation.ReservationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   events.ReservationsTable,
+			Columns: []string{events.ReservationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(reservations.FieldID, field.TypeString),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := euo.mutation.RemovedReservationsIDs(); len(nodes) > 0 && !euo.mutation.ReservationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   events.ReservationsTable,
+			Columns: []string{events.ReservationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(reservations.FieldID, field.TypeString),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := euo.mutation.ReservationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   events.ReservationsTable,
+			Columns: []string{events.ReservationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(reservations.FieldID, field.TypeString),
 			},
 		}
 		for _, k := range nodes {

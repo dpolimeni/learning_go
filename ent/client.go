@@ -16,6 +16,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/dpolimeni/fiber_app/ent/events"
+	"github.com/dpolimeni/fiber_app/ent/reservations"
 	"github.com/dpolimeni/fiber_app/ent/user"
 )
 
@@ -26,6 +27,8 @@ type Client struct {
 	Schema *migrate.Schema
 	// Events is the client for interacting with the Events builders.
 	Events *EventsClient
+	// Reservations is the client for interacting with the Reservations builders.
+	Reservations *ReservationsClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 }
@@ -40,6 +43,7 @@ func NewClient(opts ...Option) *Client {
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.Events = NewEventsClient(c.config)
+	c.Reservations = NewReservationsClient(c.config)
 	c.User = NewUserClient(c.config)
 }
 
@@ -131,10 +135,11 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:    ctx,
-		config: cfg,
-		Events: NewEventsClient(cfg),
-		User:   NewUserClient(cfg),
+		ctx:          ctx,
+		config:       cfg,
+		Events:       NewEventsClient(cfg),
+		Reservations: NewReservationsClient(cfg),
+		User:         NewUserClient(cfg),
 	}, nil
 }
 
@@ -152,10 +157,11 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:    ctx,
-		config: cfg,
-		Events: NewEventsClient(cfg),
-		User:   NewUserClient(cfg),
+		ctx:          ctx,
+		config:       cfg,
+		Events:       NewEventsClient(cfg),
+		Reservations: NewReservationsClient(cfg),
+		User:         NewUserClient(cfg),
 	}, nil
 }
 
@@ -185,6 +191,7 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	c.Events.Use(hooks...)
+	c.Reservations.Use(hooks...)
 	c.User.Use(hooks...)
 }
 
@@ -192,6 +199,7 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	c.Events.Intercept(interceptors...)
+	c.Reservations.Intercept(interceptors...)
 	c.User.Intercept(interceptors...)
 }
 
@@ -200,6 +208,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
 	case *EventsMutation:
 		return c.Events.mutate(ctx, m)
+	case *ReservationsMutation:
+		return c.Reservations.mutate(ctx, m)
 	case *UserMutation:
 		return c.User.mutate(ctx, m)
 	default:
@@ -331,6 +341,22 @@ func (c *EventsClient) QueryUsers(e *Events) *UserQuery {
 	return query
 }
 
+// QueryReservations queries the reservations edge of a Events.
+func (c *EventsClient) QueryReservations(e *Events) *ReservationsQuery {
+	query := (&ReservationsClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := e.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(events.Table, events.FieldID, id),
+			sqlgraph.To(reservations.Table, reservations.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, events.ReservationsTable, events.ReservationsColumn),
+		)
+		fromV = sqlgraph.Neighbors(e.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *EventsClient) Hooks() []Hook {
 	return c.hooks.Events
@@ -353,6 +379,171 @@ func (c *EventsClient) mutate(ctx context.Context, m *EventsMutation) (Value, er
 		return (&EventsDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown Events mutation op: %q", m.Op())
+	}
+}
+
+// ReservationsClient is a client for the Reservations schema.
+type ReservationsClient struct {
+	config
+}
+
+// NewReservationsClient returns a client for the Reservations from the given config.
+func NewReservationsClient(c config) *ReservationsClient {
+	return &ReservationsClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `reservations.Hooks(f(g(h())))`.
+func (c *ReservationsClient) Use(hooks ...Hook) {
+	c.hooks.Reservations = append(c.hooks.Reservations, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `reservations.Intercept(f(g(h())))`.
+func (c *ReservationsClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Reservations = append(c.inters.Reservations, interceptors...)
+}
+
+// Create returns a builder for creating a Reservations entity.
+func (c *ReservationsClient) Create() *ReservationsCreate {
+	mutation := newReservationsMutation(c.config, OpCreate)
+	return &ReservationsCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Reservations entities.
+func (c *ReservationsClient) CreateBulk(builders ...*ReservationsCreate) *ReservationsCreateBulk {
+	return &ReservationsCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *ReservationsClient) MapCreateBulk(slice any, setFunc func(*ReservationsCreate, int)) *ReservationsCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &ReservationsCreateBulk{err: fmt.Errorf("calling to ReservationsClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*ReservationsCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &ReservationsCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Reservations.
+func (c *ReservationsClient) Update() *ReservationsUpdate {
+	mutation := newReservationsMutation(c.config, OpUpdate)
+	return &ReservationsUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ReservationsClient) UpdateOne(r *Reservations) *ReservationsUpdateOne {
+	mutation := newReservationsMutation(c.config, OpUpdateOne, withReservations(r))
+	return &ReservationsUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ReservationsClient) UpdateOneID(id string) *ReservationsUpdateOne {
+	mutation := newReservationsMutation(c.config, OpUpdateOne, withReservationsID(id))
+	return &ReservationsUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Reservations.
+func (c *ReservationsClient) Delete() *ReservationsDelete {
+	mutation := newReservationsMutation(c.config, OpDelete)
+	return &ReservationsDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ReservationsClient) DeleteOne(r *Reservations) *ReservationsDeleteOne {
+	return c.DeleteOneID(r.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ReservationsClient) DeleteOneID(id string) *ReservationsDeleteOne {
+	builder := c.Delete().Where(reservations.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ReservationsDeleteOne{builder}
+}
+
+// Query returns a query builder for Reservations.
+func (c *ReservationsClient) Query() *ReservationsQuery {
+	return &ReservationsQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeReservations},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Reservations entity by its id.
+func (c *ReservationsClient) Get(ctx context.Context, id string) (*Reservations, error) {
+	return c.Query().Where(reservations.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ReservationsClient) GetX(ctx context.Context, id string) *Reservations {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryUser queries the user edge of a Reservations.
+func (c *ReservationsClient) QueryUser(r *Reservations) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := r.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(reservations.Table, reservations.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, reservations.UserTable, reservations.UserColumn),
+		)
+		fromV = sqlgraph.Neighbors(r.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryEvent queries the event edge of a Reservations.
+func (c *ReservationsClient) QueryEvent(r *Reservations) *EventsQuery {
+	query := (&EventsClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := r.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(reservations.Table, reservations.FieldID, id),
+			sqlgraph.To(events.Table, events.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, reservations.EventTable, reservations.EventColumn),
+		)
+		fromV = sqlgraph.Neighbors(r.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *ReservationsClient) Hooks() []Hook {
+	return c.hooks.Reservations
+}
+
+// Interceptors returns the client interceptors.
+func (c *ReservationsClient) Interceptors() []Interceptor {
+	return c.inters.Reservations
+}
+
+func (c *ReservationsClient) mutate(ctx context.Context, m *ReservationsMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ReservationsCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ReservationsUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ReservationsUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ReservationsDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Reservations mutation op: %q", m.Op())
 	}
 }
 
@@ -480,6 +671,22 @@ func (c *UserClient) QueryEvents(u *User) *EventsQuery {
 	return query
 }
 
+// QueryReservations queries the reservations edge of a User.
+func (c *UserClient) QueryReservations(u *User) *ReservationsQuery {
+	query := (&ReservationsClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := u.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(reservations.Table, reservations.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.ReservationsTable, user.ReservationsColumn),
+		)
+		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *UserClient) Hooks() []Hook {
 	return c.hooks.User
@@ -508,9 +715,9 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Events, User []ent.Hook
+		Events, Reservations, User []ent.Hook
 	}
 	inters struct {
-		Events, User []ent.Interceptor
+		Events, Reservations, User []ent.Interceptor
 	}
 )

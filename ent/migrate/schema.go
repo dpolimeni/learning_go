@@ -21,6 +21,33 @@ var (
 		Columns:    EventsColumns,
 		PrimaryKey: []*schema.Column{EventsColumns[0]},
 	}
+	// ReservationsColumns holds the columns for the "reservations" table.
+	ReservationsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "events_reservations", Type: field.TypeInt32, Nullable: true},
+		{Name: "user_reservations", Type: field.TypeInt, Nullable: true},
+	}
+	// ReservationsTable holds the schema information for the "reservations" table.
+	ReservationsTable = &schema.Table{
+		Name:       "reservations",
+		Columns:    ReservationsColumns,
+		PrimaryKey: []*schema.Column{ReservationsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "reservations_events_reservations",
+				Columns:    []*schema.Column{ReservationsColumns[2]},
+				RefColumns: []*schema.Column{EventsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "reservations_users_reservations",
+				Columns:    []*schema.Column{ReservationsColumns[3]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+	}
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -61,12 +88,15 @@ var (
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		EventsTable,
+		ReservationsTable,
 		UsersTable,
 		EventsUsersTable,
 	}
 )
 
 func init() {
+	ReservationsTable.ForeignKeys[0].RefTable = EventsTable
+	ReservationsTable.ForeignKeys[1].RefTable = UsersTable
 	EventsUsersTable.ForeignKeys[0].RefTable = EventsTable
 	EventsUsersTable.ForeignKeys[1].RefTable = UsersTable
 }

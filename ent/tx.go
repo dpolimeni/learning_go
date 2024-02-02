@@ -14,6 +14,8 @@ type Tx struct {
 	config
 	// Events is the client for interacting with the Events builders.
 	Events *EventsClient
+	// Reservations is the client for interacting with the Reservations builders.
+	Reservations *ReservationsClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 
@@ -148,6 +150,7 @@ func (tx *Tx) Client() *Client {
 
 func (tx *Tx) init() {
 	tx.Events = NewEventsClient(tx.config)
+	tx.Reservations = NewReservationsClient(tx.config)
 	tx.User = NewUserClient(tx.config)
 }
 

@@ -25,5 +25,6 @@ func (Events) Fields() []ent.Field {
 func (Events) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("users", User.Type),
+		edge.To("reservations", Reservations.Type),
 	}
 }

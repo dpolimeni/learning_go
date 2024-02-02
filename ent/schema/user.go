@@ -26,5 +26,6 @@ func (User) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("events", Events.Type).
 			Ref("users"),
+		edge.To("reservations", Reservations.Type),
 	}
 }

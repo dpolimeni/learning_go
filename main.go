@@ -1,11 +1,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/dpolimeni/fiber_app/common"
 	_ "github.com/dpolimeni/fiber_app/docs"
+	"github.com/dpolimeni/fiber_app/ent"
 	"github.com/dpolimeni/fiber_app/people"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/swagger"
@@ -30,14 +33,22 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("Env loaded:", os.Getenv("password"), err)
-
-	fmt.Println("PROD:", os.Getenv("PROD"), err)
 	app := fiber.New()
 	people.SetupRoutes(app)
 
 	app.Get("/swagger/*", swagger.HandlerDefault)
 	app.Get("/", HealthCheck)
+	password := os.Getenv("password")
+	connection := fmt.Sprintf("host=localhost port=5432 user=postgres dbname=gotest password=%s sslmode=disable", password)
+	client, err := ent.Open("postgres", connection)
+	if err != nil {
+		log.Fatalf("failed opening connection to postgres: %v", err)
+	}
+	defer client.Close()
+	// Run the auto migration tool.
+	if err := client.Schema.Create(context.Background()); err != nil {
+		log.Fatalf("failed creating schema resources: %v", err)
+	}
 
 	app.Listen(":8080")
 }
