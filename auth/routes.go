@@ -68,9 +68,6 @@ func Login(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON("User not found")
 	}
-	fmt.Println(user.Password)
-	fmt.Println(userLogin.Password)
-	fmt.Println([]byte(userLogin.Password))
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(userLogin.Password))
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON("Invalid Password")
