@@ -57,7 +57,7 @@ func Register(c *fiber.Ctx) error {
 // @Success 200 {object} map[string]interface{}
 // @BasePath /api/v1/auth
 // @Router /api/v1/auth/login [post]
-// @Param UserLogin body NewUser true "Login form"
+// @Param UserLogin body UserLogin true "Login form"
 func Login(c *fiber.Ctx) error {
 	userLogin := new(UserLogin)
 	if err := c.BodyParser(userLogin); err != nil {
@@ -68,11 +68,13 @@ func Login(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON("User not found")
 	}
-	fmt.Println(user)
-	// err = bcrypt.CompareHashAndPassword([]byte(userLogin.Password), []byte(user.Password))
-	// if err != nil {
-	// 	return c.Status(fiber.StatusBadRequest).JSON("Invalid Password")
-	// }
+	fmt.Println(user.Password)
+	fmt.Println(userLogin.Password)
+	fmt.Println([]byte(userLogin.Password))
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(userLogin.Password))
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON("Invalid Password")
+	}
 	return c.Status(fiber.StatusAccepted).JSON("Logged in")
 }
 

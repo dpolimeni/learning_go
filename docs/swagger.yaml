@@ -9,6 +9,13 @@ definitions:
       username:
         type: string
     type: object
+  auth.UserLogin:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    type: object
   people.Person:
     properties:
       age:
@@ -57,7 +64,7 @@ paths:
         name: UserLogin
         required: true
         schema:
-          $ref: '#/definitions/auth.NewUser'
+          $ref: '#/definitions/auth.UserLogin'
       produces:
       - application/json
       responses:

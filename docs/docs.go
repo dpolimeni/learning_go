@@ -66,7 +66,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/auth.NewUser"
+                            "$ref": "#/definitions/auth.UserLogin"
                         }
                     }
                 ],
@@ -246,6 +246,17 @@ const docTemplate = `{
                 "email": {
                     "type": "string"
                 },
+                "password": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "auth.UserLogin": {
+            "type": "object",
+            "properties": {
                 "password": {
                     "type": "string"
                 },
