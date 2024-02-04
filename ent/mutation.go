@@ -1150,6 +1150,9 @@ type UserMutation struct {
 	age                 *int
 	addage              *int
 	name                *string
+	email               *string
+	password            *string
+	username            *string
 	clearedFields       map[string]struct{}
 	events              map[int32]struct{}
 	removedevents       map[int32]struct{}
@@ -1352,6 +1355,114 @@ func (m *UserMutation) ResetName() {
 	m.name = nil
 }
 
+// SetEmail sets the "email" field.
+func (m *UserMutation) SetEmail(s string) {
+	m.email = &s
+}
+
+// Email returns the value of the "email" field in the mutation.
+func (m *UserMutation) Email() (r string, exists bool) {
+	v := m.email
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEmail returns the old "email" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldEmail(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEmail is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEmail requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEmail: %w", err)
+	}
+	return oldValue.Email, nil
+}
+
+// ResetEmail resets all changes to the "email" field.
+func (m *UserMutation) ResetEmail() {
+	m.email = nil
+}
+
+// SetPassword sets the "password" field.
+func (m *UserMutation) SetPassword(s string) {
+	m.password = &s
+}
+
+// Password returns the value of the "password" field in the mutation.
+func (m *UserMutation) Password() (r string, exists bool) {
+	v := m.password
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPassword returns the old "password" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldPassword(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPassword is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPassword requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPassword: %w", err)
+	}
+	return oldValue.Password, nil
+}
+
+// ResetPassword resets all changes to the "password" field.
+func (m *UserMutation) ResetPassword() {
+	m.password = nil
+}
+
+// SetUsername sets the "username" field.
+func (m *UserMutation) SetUsername(s string) {
+	m.username = &s
+}
+
+// Username returns the value of the "username" field in the mutation.
+func (m *UserMutation) Username() (r string, exists bool) {
+	v := m.username
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUsername returns the old "username" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldUsername(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUsername is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUsername requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUsername: %w", err)
+	}
+	return oldValue.Username, nil
+}
+
+// ResetUsername resets all changes to the "username" field.
+func (m *UserMutation) ResetUsername() {
+	m.username = nil
+}
+
 // AddEventIDs adds the "events" edge to the Events entity by ids.
 func (m *UserMutation) AddEventIDs(ids ...int32) {
 	if m.events == nil {
@@ -1494,12 +1605,21 @@ func (m *UserMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UserMutation) Fields() []string {
-	fields := make([]string, 0, 2)
+	fields := make([]string, 0, 5)
 	if m.age != nil {
 		fields = append(fields, user.FieldAge)
 	}
 	if m.name != nil {
 		fields = append(fields, user.FieldName)
+	}
+	if m.email != nil {
+		fields = append(fields, user.FieldEmail)
+	}
+	if m.password != nil {
+		fields = append(fields, user.FieldPassword)
+	}
+	if m.username != nil {
+		fields = append(fields, user.FieldUsername)
 	}
 	return fields
 }
@@ -1513,6 +1633,12 @@ func (m *UserMutation) Field(name string) (ent.Value, bool) {
 		return m.Age()
 	case user.FieldName:
 		return m.Name()
+	case user.FieldEmail:
+		return m.Email()
+	case user.FieldPassword:
+		return m.Password()
+	case user.FieldUsername:
+		return m.Username()
 	}
 	return nil, false
 }
@@ -1526,6 +1652,12 @@ func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldAge(ctx)
 	case user.FieldName:
 		return m.OldName(ctx)
+	case user.FieldEmail:
+		return m.OldEmail(ctx)
+	case user.FieldPassword:
+		return m.OldPassword(ctx)
+	case user.FieldUsername:
+		return m.OldUsername(ctx)
 	}
 	return nil, fmt.Errorf("unknown User field %s", name)
 }
@@ -1548,6 +1680,27 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetName(v)
+		return nil
+	case user.FieldEmail:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEmail(v)
+		return nil
+	case user.FieldPassword:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPassword(v)
+		return nil
+	case user.FieldUsername:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUsername(v)
 		return nil
 	}
 	return fmt.Errorf("unknown User field %s", name)
@@ -1618,6 +1771,15 @@ func (m *UserMutation) ResetField(name string) error {
 		return nil
 	case user.FieldName:
 		m.ResetName()
+		return nil
+	case user.FieldEmail:
+		m.ResetEmail()
+		return nil
+	case user.FieldPassword:
+		m.ResetPassword()
+		return nil
+	case user.FieldUsername:
+		m.ResetUsername()
 		return nil
 	}
 	return fmt.Errorf("unknown User field %s", name)

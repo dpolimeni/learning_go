@@ -27,6 +27,14 @@ func (uc *UserCreate) SetAge(i int) *UserCreate {
 	return uc
 }
 
+// SetNillableAge sets the "age" field if the given value is not nil.
+func (uc *UserCreate) SetNillableAge(i *int) *UserCreate {
+	if i != nil {
+		uc.SetAge(*i)
+	}
+	return uc
+}
+
 // SetName sets the "name" field.
 func (uc *UserCreate) SetName(s string) *UserCreate {
 	uc.mutation.SetName(s)
@@ -38,6 +46,24 @@ func (uc *UserCreate) SetNillableName(s *string) *UserCreate {
 	if s != nil {
 		uc.SetName(*s)
 	}
+	return uc
+}
+
+// SetEmail sets the "email" field.
+func (uc *UserCreate) SetEmail(s string) *UserCreate {
+	uc.mutation.SetEmail(s)
+	return uc
+}
+
+// SetPassword sets the "password" field.
+func (uc *UserCreate) SetPassword(s string) *UserCreate {
+	uc.mutation.SetPassword(s)
+	return uc
+}
+
+// SetUsername sets the "username" field.
+func (uc *UserCreate) SetUsername(s string) *UserCreate {
+	uc.mutation.SetUsername(s)
 	return uc
 }
 
@@ -106,6 +132,10 @@ func (uc *UserCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (uc *UserCreate) defaults() {
+	if _, ok := uc.mutation.Age(); !ok {
+		v := user.DefaultAge
+		uc.mutation.SetAge(v)
+	}
 	if _, ok := uc.mutation.Name(); !ok {
 		v := user.DefaultName
 		uc.mutation.SetName(v)
@@ -124,6 +154,15 @@ func (uc *UserCreate) check() error {
 	}
 	if _, ok := uc.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "User.name"`)}
+	}
+	if _, ok := uc.mutation.Email(); !ok {
+		return &ValidationError{Name: "email", err: errors.New(`ent: missing required field "User.email"`)}
+	}
+	if _, ok := uc.mutation.Password(); !ok {
+		return &ValidationError{Name: "password", err: errors.New(`ent: missing required field "User.password"`)}
+	}
+	if _, ok := uc.mutation.Username(); !ok {
+		return &ValidationError{Name: "username", err: errors.New(`ent: missing required field "User.username"`)}
 	}
 	return nil
 }
@@ -158,6 +197,18 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	if value, ok := uc.mutation.Name(); ok {
 		_spec.SetField(user.FieldName, field.TypeString, value)
 		_node.Name = value
+	}
+	if value, ok := uc.mutation.Email(); ok {
+		_spec.SetField(user.FieldEmail, field.TypeString, value)
+		_node.Email = value
+	}
+	if value, ok := uc.mutation.Password(); ok {
+		_spec.SetField(user.FieldPassword, field.TypeString, value)
+		_node.Password = value
+	}
+	if value, ok := uc.mutation.Username(); ok {
+		_spec.SetField(user.FieldUsername, field.TypeString, value)
+		_node.Username = value
 	}
 	if nodes := uc.mutation.EventsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

@@ -15,9 +15,12 @@ type User struct {
 func (User) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int("age").
-			Positive(),
+			Positive().Default(1),
 		field.String("name").
 			Default("unknown"),
+		field.String("email").Unique(),
+		field.String("password"),
+		field.String("username").Unique(),
 	}
 }
 

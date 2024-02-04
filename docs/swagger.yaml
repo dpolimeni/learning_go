@@ -1,5 +1,14 @@
 basePath: /
 definitions:
+  auth.NewUser:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+      username:
+        type: string
+    type: object
   people.Person:
     properties:
       age:
@@ -38,11 +47,17 @@ paths:
       summary: Show the status of server.
       tags:
       - Root Base
-  /api/v1/people:
-    delete:
+  /api/v1/auth/login:
+    post:
       consumes:
-      - '*/*'
-      description: Delete a person on DB.
+      - application/json
+      parameters:
+      - description: Login form
+        in: body
+        name: UserLogin
+        required: true
+        schema:
+          $ref: '#/definitions/auth.NewUser'
       produces:
       - application/json
       responses:
@@ -51,9 +66,32 @@ paths:
           schema:
             additionalProperties: true
             type: object
-      summary: Delete a person.
+      summary: Login a person on DB.
       tags:
-      - People
+      - Authentication
+  /api/v1/auth/register:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: New User to register
+        in: body
+        name: NewUser
+        required: true
+        schema:
+          $ref: '#/definitions/auth.NewUser'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Register a person on DB.
+      tags:
+      - Authentication
+  /api/v1/people:
     get:
       consumes:
       - '*/*'
@@ -69,6 +107,7 @@ paths:
       summary: Get all people.
       tags:
       - People
+  /api/v1/person:
     post:
       consumes:
       - application/json
@@ -91,7 +130,28 @@ paths:
       summary: Add a person on DB.
       tags:
       - People
-  /api/v1/people/{id}:
+  /api/v1/person/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a person on DB.
+      parameters:
+      - description: Person ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Delete a person.
+      tags:
+      - People
     get:
       consumes:
       - '*/*'

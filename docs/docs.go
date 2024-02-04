@@ -47,6 +47,74 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/auth/login": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Login a person on DB.",
+                "parameters": [
+                    {
+                        "description": "Login form",
+                        "name": "UserLogin",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/auth.NewUser"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/register": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Register a person on DB.",
+                "parameters": [
+                    {
+                        "description": "New User to register",
+                        "name": "NewUser",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/auth.NewUser"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/people": {
             "get": {
                 "description": "Get people from db.",
@@ -69,7 +137,9 @@ const docTemplate = `{
                         }
                     }
                 }
-            },
+            }
+        },
+        "/api/v1/person": {
             "post": {
                 "description": "Add a person on DB.",
                 "consumes": [
@@ -102,31 +172,9 @@ const docTemplate = `{
                         }
                     }
                 }
-            },
-            "delete": {
-                "description": "Delete a person on DB.",
-                "consumes": [
-                    "*/*"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "People"
-                ],
-                "summary": "Delete a person.",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    }
-                }
             }
         },
-        "/api/v1/people/{id}": {
+        "/api/v1/person/{id}": {
             "get": {
                 "description": "Get person from db.",
                 "consumes": [
@@ -157,10 +205,55 @@ const docTemplate = `{
                         }
                     }
                 }
+            },
+            "delete": {
+                "description": "Delete a person on DB.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "People"
+                ],
+                "summary": "Delete a person.",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Person ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
             }
         }
     },
     "definitions": {
+        "auth.NewUser": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
         "people.Person": {
             "type": "object",
             "properties": {

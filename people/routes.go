@@ -42,7 +42,7 @@ func GetPeople(c *fiber.Ctx) error {
 // @Produce json
 // @Success 200 {object} map[string]interface{}
 // @BasePath /api/v1/people
-// @Router /api/v1/people/{id} [get]
+// @Router /api/v1/person/{id} [get]
 // @Param id path int true "Person ID"
 func GetPerson(c *fiber.Ctx) error {
 	person_id := c.Params("id")
@@ -63,7 +63,7 @@ func GetPerson(c *fiber.Ctx) error {
 // @Produce json
 // @Success 200 {object} map[string]interface{}
 // @BasePath /api/v1/people
-// @Router /api/v1/people [post]
+// @Router /api/v1/person [post]
 // @Param person body Person true "Person"
 func AddPerson(c *fiber.Ctx) error {
 
@@ -81,7 +81,8 @@ func AddPerson(c *fiber.Ctx) error {
 	person, err := DbClient.User.Create().SetAge(p.Age).SetName(p.Name).Save(context.Background())
 	if err != nil {
 		// Handle error
-		return c.Status(fiber.StatusInternalServerError).SendString("Error creating the person")
+		error_string := fmt.Sprintf("Error creating the person: %s", err)
+		return c.Status(fiber.StatusInternalServerError).SendString(error_string)
 	}
 	return c.SendString("Person with name " + person.Name + " added to the database!")
 }
@@ -90,20 +91,32 @@ func AddPerson(c *fiber.Ctx) error {
 // @Summary Delete a person.
 // @Description Delete a person on DB.
 // @Tags People
-// @Accept */*
+// @Accept application/json
 // @Produce json
 // @Success 200 {object} map[string]interface{}
 // @BasePath /api/v1/people
-// @Router /api/v1/people [delete]
+// @Router /api/v1/person/{id} [delete]
+// @Param id path int true "Person ID"
 func DeletePerson(c *fiber.Ctx) error {
-	return c.SendString("Delete Person")
+	// Get the person id from the url
+	person_id := c.Params("id")
+	number, _ := strconv.Atoi(person_id)
+	// Delete the person from the database
+	err := DbClient.User.DeleteOneID(number).Exec(context.Background())
+	if err != nil {
+		// Handle error
+		error_string := fmt.Sprintf("Error deleting the person: %s", err)
+		return c.Status(fiber.StatusInternalServerError).SendString(error_string)
+	}
+	// Return a success message
+	return c.SendString("Deleted Person with id " + person_id)
 }
 
 func SetupRoutes(app *fiber.App) fiber.Router {
 	v1 := app.Group("/api/v1")
 	v1.Get("/people", GetPeople)
-	v1.Get("/people/:id<int>", GetPerson)
-	v1.Post("/people", AddPerson)
-	v1.Delete("/people/:id", DeletePerson)
+	v1.Get("/person/:id<int>", GetPerson)
+	v1.Post("/person", AddPerson)
+	v1.Delete("/person/:id", DeletePerson)
 	return v1
 }

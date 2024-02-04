@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/dpolimeni/fiber_app/auth"
 	"github.com/dpolimeni/fiber_app/common"
 	_ "github.com/dpolimeni/fiber_app/docs"
 	"github.com/dpolimeni/fiber_app/ent"
@@ -35,6 +36,7 @@ func main() {
 	}
 	app := fiber.New()
 	people.SetupRoutes(app)
+	auth.SetUpAuthRoutes(app)
 
 	app.Get("/swagger/*", swagger.HandlerDefault)
 	app.Get("/", HealthCheck)
