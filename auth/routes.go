@@ -72,7 +72,11 @@ func Login(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON("Invalid Password")
 	}
-	return c.Status(fiber.StatusAccepted).JSON("Logged in")
+	token, err := generateToken(user.Username)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON("Error generating token")
+	}
+	return c.Status(fiber.StatusAccepted).JSON(token)
 }
 
 func SetUpAuthRoutes(app *fiber.App) {

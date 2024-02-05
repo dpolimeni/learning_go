@@ -29,7 +29,6 @@ func GetPeople(c *fiber.Ctx) error {
 	}
 	fmt.Println(users)
 	// convert users to json to return on the api
-
 	// return the JSON
 	return c.JSON(users)
 }

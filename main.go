@@ -15,7 +15,6 @@ import (
 	"github.com/gofiber/swagger"
 )
 
-var err = common.LoadEnv()
 var DbClient = common.GetDB()
 
 // @title Fiber Example API
@@ -30,16 +29,14 @@ var DbClient = common.GetDB()
 // @BasePath /
 func main() {
 
-	fmt.Println("Hello World")
-	if err != nil {
-		panic(err)
-	}
+	// Create a new Fiber instance
 	app := fiber.New()
 	people.SetupRoutes(app)
 	auth.SetUpAuthRoutes(app)
 
 	app.Get("/swagger/*", swagger.HandlerDefault)
 	app.Get("/", HealthCheck)
+	common.LoadEnv()
 	password := os.Getenv("password")
 	connection := fmt.Sprintf("host=localhost port=5432 user=postgres dbname=gotest password=%s sslmode=disable", password)
 	client, err := ent.Open("postgres", connection)
