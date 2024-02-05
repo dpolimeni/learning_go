@@ -3,9 +3,11 @@ package people
 import (
 	"context"
 	"fmt"
+	"os"
 	"strconv"
 
 	"github.com/dpolimeni/fiber_app/common"
+	jwtware "github.com/gofiber/contrib/jwt"
 	"github.com/gofiber/fiber/v2"
 	_ "github.com/lib/pq"
 )
@@ -113,7 +115,9 @@ func DeletePerson(c *fiber.Ctx) error {
 
 func SetupRoutes(app *fiber.App) fiber.Router {
 	v1 := app.Group("/api/v1")
-	v1.Get("/people", GetPeople)
+	v1.Get("/people", jwtware.New(jwtware.Config{
+		SigningKey: jwtware.SigningKey{Key: []byte(os.Getenv("SECRET_KEY"))},
+	}), GetPeople)
 	v1.Get("/person/:id<int>", GetPerson)
 	v1.Post("/person", AddPerson)
 	v1.Delete("/person/:id", DeletePerson)

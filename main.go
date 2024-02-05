@@ -7,10 +7,13 @@ import (
 	"os"
 
 	"github.com/dpolimeni/fiber_app/auth"
+	"github.com/golang-jwt/jwt"
+
 	"github.com/dpolimeni/fiber_app/common"
 	_ "github.com/dpolimeni/fiber_app/docs"
 	"github.com/dpolimeni/fiber_app/ent"
 	"github.com/dpolimeni/fiber_app/people"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/swagger"
 )
@@ -31,12 +34,13 @@ func main() {
 
 	// Create a new Fiber instance
 	app := fiber.New()
+	common.LoadEnv()
+	app.Get("/swagger/*", swagger.HandlerDefault)
 	people.SetupRoutes(app)
 	auth.SetUpAuthRoutes(app)
-
-	app.Get("/swagger/*", swagger.HandlerDefault)
 	app.Get("/", HealthCheck)
-	common.LoadEnv()
+	//app.Get("/restricted", restricted)
+
 	password := os.Getenv("password")
 	connection := fmt.Sprintf("host=localhost port=5432 user=postgres dbname=gotest password=%s sslmode=disable", password)
 	client, err := ent.Open("postgres", connection)
@@ -62,4 +66,20 @@ func main() {
 // @Router / [get]
 func HealthCheck(c *fiber.Ctx) error {
 	return c.SendString("Hello, World!")
+}
+
+// JWT godoc
+// @Summary Show the status of server.
+// @Description Get test on base path.
+// @Tags Root Base
+// @Accept */*
+// @Produce json
+// @Success 200 {object} map[string]interface{}
+// @Router /restricted [get]
+func restricted(c *fiber.Ctx) error {
+	fmt.Println(c.Locals("user"))
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	name := claims["name"].(string)
+	return c.SendString("Welcome " + name)
 }
