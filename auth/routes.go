@@ -19,8 +19,8 @@ var DbClient = common.GetDB()
 // @Accept application/json
 // @Produce json
 // @Success 200 {object} map[string]interface{}
-// @BasePath /api/v1/auth/register
-// @Router /api/v1/auth/register [post]
+// @BasePath /auth
+// @Router /auth/register [post]
 // @Param NewUser body NewUser true "New User to register"
 func Register(c *fiber.Ctx) error {
 	newUser := new(NewUser)
@@ -55,8 +55,8 @@ func Register(c *fiber.Ctx) error {
 // @Accept application/json
 // @Produce json
 // @Success 200 {object} map[string]interface{}
-// @BasePath /api/v1/auth
-// @Router /api/v1/auth/login [post]
+// @BasePath /auth
+// @Router /auth/login [post]
 // @Param UserLogin body UserLogin true "Login form"
 func Login(c *fiber.Ctx) error {
 	userLogin := new(UserLogin)
@@ -80,7 +80,7 @@ func Login(c *fiber.Ctx) error {
 }
 
 func SetUpAuthRoutes(app *fiber.App) {
-	v1 := app.Group("/api/v1")
-	v1.Post("/auth/register", Register)
-	v1.Post("/auth/login", Login)
+	v2 := app.Group("/auth")
+	v2.Post("/register", Register)
+	v2.Post("/login", Login)
 }

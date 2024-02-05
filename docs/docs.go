@@ -47,80 +47,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/auth/login": {
-            "post": {
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Authentication"
-                ],
-                "summary": "Login a person on DB.",
-                "parameters": [
-                    {
-                        "description": "Login form",
-                        "name": "UserLogin",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/auth.UserLogin"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/auth/register": {
-            "post": {
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Authentication"
-                ],
-                "summary": "Register a person on DB.",
-                "parameters": [
-                    {
-                        "description": "New User to register",
-                        "name": "NewUser",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/auth.NewUser"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    }
-                }
-            }
-        },
         "/api/v1/people": {
             "get": {
                 "description": "Get people from db.",
-                "consumes": [
-                    "*/*"
-                ],
                 "produces": [
                     "application/json"
                 ],
@@ -128,6 +57,16 @@ const docTemplate = `{
                     "People"
                 ],
                 "summary": "Get all people.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer",
+                        "description": "Authorization",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -161,6 +100,14 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/people.Person"
                         }
+                    },
+                    {
+                        "type": "string",
+                        "default": "Bearer",
+                        "description": "Authorization",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -194,6 +141,14 @@ const docTemplate = `{
                         "name": "id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "default": "Bearer",
+                        "description": "Authorization",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -225,6 +180,14 @@ const docTemplate = `{
                         "name": "id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "default": "Bearer",
+                        "description": "Authorization",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -238,19 +201,63 @@ const docTemplate = `{
                 }
             }
         },
-        "/restricted": {
-            "get": {
-                "description": "Get test on base path.",
+        "/auth/login": {
+            "post": {
                 "consumes": [
-                    "*/*"
+                    "application/json"
                 ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Root Base"
+                    "Authentication"
                 ],
-                "summary": "Show the status of server.",
+                "summary": "Login a person on DB.",
+                "parameters": [
+                    {
+                        "description": "Login form",
+                        "name": "UserLogin",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/auth.UserLogin"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/register": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Register a person on DB.",
+                "parameters": [
+                    {
+                        "description": "New User to register",
+                        "name": "NewUser",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/auth.NewUser"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",

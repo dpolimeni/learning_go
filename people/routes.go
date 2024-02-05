@@ -18,8 +18,8 @@ var DbClient = common.GetDB()
 // @Summary Get all people.
 // @Description Get people from db.
 // @Tags People
-// @Accept */*
 // @Produce json
+// @Param Authorization header string true "Authorization" Default(Bearer )
 // @Success 200 {object} map[string]interface{}
 // @BasePath /api/v1/people
 // @Router /api/v1/people [get]
@@ -45,6 +45,7 @@ func GetPeople(c *fiber.Ctx) error {
 // @BasePath /api/v1/people
 // @Router /api/v1/person/{id} [get]
 // @Param id path int true "Person ID"
+// @Param Authorization header string true "Authorization" Default(Bearer )
 func GetPerson(c *fiber.Ctx) error {
 	person_id := c.Params("id")
 	number, _ := strconv.Atoi(person_id)
@@ -66,6 +67,7 @@ func GetPerson(c *fiber.Ctx) error {
 // @BasePath /api/v1/people
 // @Router /api/v1/person [post]
 // @Param person body Person true "Person"
+// @Param Authorization header string true "Authorization" Default(Bearer )
 func AddPerson(c *fiber.Ctx) error {
 
 	var p Person
@@ -98,6 +100,7 @@ func AddPerson(c *fiber.Ctx) error {
 // @BasePath /api/v1/people
 // @Router /api/v1/person/{id} [delete]
 // @Param id path int true "Person ID"
+// @Param Authorization header string true "Authorization" Default(Bearer )
 func DeletePerson(c *fiber.Ctx) error {
 	// Get the person id from the url
 	person_id := c.Params("id")
@@ -115,9 +118,10 @@ func DeletePerson(c *fiber.Ctx) error {
 
 func SetupRoutes(app *fiber.App) fiber.Router {
 	v1 := app.Group("/api/v1")
-	v1.Get("/people", jwtware.New(jwtware.Config{
+	v1.Use(jwtware.New(jwtware.Config{
 		SigningKey: jwtware.SigningKey{Key: []byte(os.Getenv("SECRET_KEY"))},
-	}), GetPeople)
+	}))
+	v1.Get("/people", GetPeople)
 	v1.Get("/person/:id<int>", GetPerson)
 	v1.Post("/person", AddPerson)
 	v1.Delete("/person/:id", DeletePerson)

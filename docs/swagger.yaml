@@ -54,55 +54,16 @@ paths:
       summary: Show the status of server.
       tags:
       - Root Base
-  /api/v1/auth/login:
-    post:
-      consumes:
-      - application/json
-      parameters:
-      - description: Login form
-        in: body
-        name: UserLogin
-        required: true
-        schema:
-          $ref: '#/definitions/auth.UserLogin'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            additionalProperties: true
-            type: object
-      summary: Login a person on DB.
-      tags:
-      - Authentication
-  /api/v1/auth/register:
-    post:
-      consumes:
-      - application/json
-      parameters:
-      - description: New User to register
-        in: body
-        name: NewUser
-        required: true
-        schema:
-          $ref: '#/definitions/auth.NewUser'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            additionalProperties: true
-            type: object
-      summary: Register a person on DB.
-      tags:
-      - Authentication
   /api/v1/people:
     get:
-      consumes:
-      - '*/*'
       description: Get people from db.
+      parameters:
+      - default: Bearer
+        description: Authorization
+        in: header
+        name: Authorization
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -126,6 +87,12 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/people.Person'
+      - default: Bearer
+        description: Authorization
+        in: header
+        name: Authorization
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -148,6 +115,12 @@ paths:
         name: id
         required: true
         type: integer
+      - default: Bearer
+        description: Authorization
+        in: header
+        name: Authorization
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -169,6 +142,12 @@ paths:
         name: id
         required: true
         type: integer
+      - default: Bearer
+        description: Authorization
+        in: header
+        name: Authorization
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -180,11 +159,17 @@ paths:
       summary: Get a single person.
       tags:
       - People
-  /restricted:
-    get:
+  /auth/login:
+    post:
       consumes:
-      - '*/*'
-      description: Get test on base path.
+      - application/json
+      parameters:
+      - description: Login form
+        in: body
+        name: UserLogin
+        required: true
+        schema:
+          $ref: '#/definitions/auth.UserLogin'
       produces:
       - application/json
       responses:
@@ -193,7 +178,29 @@ paths:
           schema:
             additionalProperties: true
             type: object
-      summary: Show the status of server.
+      summary: Login a person on DB.
       tags:
-      - Root Base
+      - Authentication
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: New User to register
+        in: body
+        name: NewUser
+        required: true
+        schema:
+          $ref: '#/definitions/auth.NewUser'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Register a person on DB.
+      tags:
+      - Authentication
 swagger: "2.0"
