@@ -14,6 +14,7 @@ import (
 	"github.com/dpolimeni/fiber_app/people"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/swagger"
 )
 
@@ -35,6 +36,7 @@ func main() {
 	// Create a new Fiber instance
 	app := fiber.New()
 	common.LoadEnv()
+	app.Use(logger.New())
 	app.Get("/swagger/*", swagger.HandlerDefault)
 	people.SetupRoutes(app)
 	auth.SetUpAuthRoutes(app)
