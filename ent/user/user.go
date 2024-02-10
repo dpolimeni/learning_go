@@ -22,6 +22,8 @@ const (
 	FieldPassword = "password"
 	// FieldUsername holds the string denoting the username field in the database.
 	FieldUsername = "username"
+	// FieldIsAdmin holds the string denoting the is_admin field in the database.
+	FieldIsAdmin = "is_admin"
 	// EdgeEvents holds the string denoting the events edge name in mutations.
 	EdgeEvents = "events"
 	// EdgeReservations holds the string denoting the reservations edge name in mutations.
@@ -50,6 +52,7 @@ var Columns = []string{
 	FieldEmail,
 	FieldPassword,
 	FieldUsername,
+	FieldIsAdmin,
 }
 
 var (
@@ -75,6 +78,8 @@ var (
 	AgeValidator func(int) error
 	// DefaultName holds the default value on creation for the "name" field.
 	DefaultName string
+	// DefaultIsAdmin holds the default value on creation for the "is_admin" field.
+	DefaultIsAdmin bool
 )
 
 // OrderOption defines the ordering options for the User queries.
@@ -108,6 +113,11 @@ func ByPassword(opts ...sql.OrderTermOption) OrderOption {
 // ByUsername orders the results by the username field.
 func ByUsername(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUsername, opts...).ToFunc()
+}
+
+// ByIsAdmin orders the results by the is_admin field.
+func ByIsAdmin(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldIsAdmin, opts...).ToFunc()
 }
 
 // ByEventsCount orders the results by events count.

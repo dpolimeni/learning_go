@@ -56,4 +56,8 @@ func init() {
 	userDescName := userFields[1].Descriptor()
 	// user.DefaultName holds the default value on creation for the name field.
 	user.DefaultName = userDescName.Default.(string)
+	// userDescIsAdmin is the schema descriptor for is_admin field.
+	userDescIsAdmin := userFields[5].Descriptor()
+	// user.DefaultIsAdmin holds the default value on creation for the is_admin field.
+	user.DefaultIsAdmin = userDescIsAdmin.Default.(bool)
 }

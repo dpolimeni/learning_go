@@ -106,6 +106,20 @@ func (uu *UserUpdate) SetNillableUsername(s *string) *UserUpdate {
 	return uu
 }
 
+// SetIsAdmin sets the "is_admin" field.
+func (uu *UserUpdate) SetIsAdmin(b bool) *UserUpdate {
+	uu.mutation.SetIsAdmin(b)
+	return uu
+}
+
+// SetNillableIsAdmin sets the "is_admin" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableIsAdmin(b *bool) *UserUpdate {
+	if b != nil {
+		uu.SetIsAdmin(*b)
+	}
+	return uu
+}
+
 // AddEventIDs adds the "events" edge to the Events entity by IDs.
 func (uu *UserUpdate) AddEventIDs(ids ...int32) *UserUpdate {
 	uu.mutation.AddEventIDs(ids...)
@@ -249,6 +263,9 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := uu.mutation.Username(); ok {
 		_spec.SetField(user.FieldUsername, field.TypeString, value)
+	}
+	if value, ok := uu.mutation.IsAdmin(); ok {
+		_spec.SetField(user.FieldIsAdmin, field.TypeBool, value)
 	}
 	if uu.mutation.EventsCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -437,6 +454,20 @@ func (uuo *UserUpdateOne) SetNillableUsername(s *string) *UserUpdateOne {
 	return uuo
 }
 
+// SetIsAdmin sets the "is_admin" field.
+func (uuo *UserUpdateOne) SetIsAdmin(b bool) *UserUpdateOne {
+	uuo.mutation.SetIsAdmin(b)
+	return uuo
+}
+
+// SetNillableIsAdmin sets the "is_admin" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableIsAdmin(b *bool) *UserUpdateOne {
+	if b != nil {
+		uuo.SetIsAdmin(*b)
+	}
+	return uuo
+}
+
 // AddEventIDs adds the "events" edge to the Events entity by IDs.
 func (uuo *UserUpdateOne) AddEventIDs(ids ...int32) *UserUpdateOne {
 	uuo.mutation.AddEventIDs(ids...)
@@ -610,6 +641,9 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	}
 	if value, ok := uuo.mutation.Username(); ok {
 		_spec.SetField(user.FieldUsername, field.TypeString, value)
+	}
+	if value, ok := uuo.mutation.IsAdmin(); ok {
+		_spec.SetField(user.FieldIsAdmin, field.TypeBool, value)
 	}
 	if uuo.mutation.EventsCleared() {
 		edge := &sqlgraph.EdgeSpec{

@@ -67,6 +67,20 @@ func (uc *UserCreate) SetUsername(s string) *UserCreate {
 	return uc
 }
 
+// SetIsAdmin sets the "is_admin" field.
+func (uc *UserCreate) SetIsAdmin(b bool) *UserCreate {
+	uc.mutation.SetIsAdmin(b)
+	return uc
+}
+
+// SetNillableIsAdmin sets the "is_admin" field if the given value is not nil.
+func (uc *UserCreate) SetNillableIsAdmin(b *bool) *UserCreate {
+	if b != nil {
+		uc.SetIsAdmin(*b)
+	}
+	return uc
+}
+
 // AddEventIDs adds the "events" edge to the Events entity by IDs.
 func (uc *UserCreate) AddEventIDs(ids ...int32) *UserCreate {
 	uc.mutation.AddEventIDs(ids...)
@@ -140,6 +154,10 @@ func (uc *UserCreate) defaults() {
 		v := user.DefaultName
 		uc.mutation.SetName(v)
 	}
+	if _, ok := uc.mutation.IsAdmin(); !ok {
+		v := user.DefaultIsAdmin
+		uc.mutation.SetIsAdmin(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -163,6 +181,9 @@ func (uc *UserCreate) check() error {
 	}
 	if _, ok := uc.mutation.Username(); !ok {
 		return &ValidationError{Name: "username", err: errors.New(`ent: missing required field "User.username"`)}
+	}
+	if _, ok := uc.mutation.IsAdmin(); !ok {
+		return &ValidationError{Name: "is_admin", err: errors.New(`ent: missing required field "User.is_admin"`)}
 	}
 	return nil
 }
@@ -209,6 +230,10 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	if value, ok := uc.mutation.Username(); ok {
 		_spec.SetField(user.FieldUsername, field.TypeString, value)
 		_node.Username = value
+	}
+	if value, ok := uc.mutation.IsAdmin(); ok {
+		_spec.SetField(user.FieldIsAdmin, field.TypeBool, value)
+		_node.IsAdmin = value
 	}
 	if nodes := uc.mutation.EventsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
