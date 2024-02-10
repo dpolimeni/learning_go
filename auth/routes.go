@@ -66,6 +66,7 @@ func Login(c *fiber.Ctx) error {
 	}
 	user, err := DbClient.User.Query().Where(user.UsernameEQ(userLogin.Username)).First(context.Background())
 	if err != nil {
+		fmt.Println(err)
 		return c.Status(fiber.StatusBadRequest).JSON("User not found")
 	}
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(userLogin.Password))

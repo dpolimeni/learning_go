@@ -146,5 +146,6 @@ func SetupRoutes(app *fiber.App) fiber.Router {
 	v1.Get("/person/:id<int>", GetPerson)
 	v1.Delete("/person/:id", DeletePerson)
 	v1.Put("/person/:username", UpdatePerson)
+	//defer DbClient.Close()
 	return v1
 }
