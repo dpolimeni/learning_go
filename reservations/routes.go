@@ -54,7 +54,7 @@ func GetReservation(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusAccepted).JSON(reservation)
 }
 
-func SetUpReservationsRoutes(app *fiber.App) {
+func AddReservationsRoutes(app *fiber.App) {
 	v1 := app.Group("/api/v1")
 	v1.Use(jwtware.New(jwtware.Config{
 		SigningKey: jwtware.SigningKey{Key: []byte(os.Getenv("SECRET_KEY"))},

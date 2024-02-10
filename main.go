@@ -11,6 +11,7 @@ import (
 	"github.com/dpolimeni/fiber_app/common"
 	_ "github.com/dpolimeni/fiber_app/docs"
 	"github.com/dpolimeni/fiber_app/ent"
+	"github.com/dpolimeni/fiber_app/events"
 	"github.com/dpolimeni/fiber_app/people"
 	"github.com/dpolimeni/fiber_app/reservations"
 	"github.com/gofiber/fiber/v2"
@@ -40,7 +41,8 @@ func main() {
 	app.Get("/swagger/*", swagger.HandlerDefault)
 	people.SetupRoutes(app)
 	auth.SetUpAuthRoutes(app)
-	reservations.SetUpReservationsRoutes(app)
+	reservations.AddReservationsRoutes(app)
+	events.AddEventsRoutes(app)
 	app.Get("/", HealthCheck)
 	password := os.Getenv("password")
 	connection := fmt.Sprintf("host=localhost port=5432 user=postgres dbname=gotest password=%s sslmode=disable", password)

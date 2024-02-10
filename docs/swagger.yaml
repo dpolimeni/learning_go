@@ -16,6 +16,15 @@ definitions:
       username:
         type: string
     type: object
+  events.NewEvent:
+    properties:
+      capacity:
+        type: integer
+      description:
+        type: string
+      name:
+        type: string
+    type: object
   people.Person:
     properties:
       age:
@@ -52,6 +61,55 @@ paths:
       summary: Show the status of server.
       tags:
       - Root Base
+  /api/v1/events:
+    get:
+      description: Get events from db.
+      parameters:
+      - default: Bearer
+        description: Authorization
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get all events.
+      tags:
+      - Events
+    post:
+      consumes:
+      - application/json
+      description: Add event to db.
+      parameters:
+      - default: Bearer
+        description: Authorization
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: New Event to add
+        in: body
+        name: NewEvent
+        required: true
+        schema:
+          $ref: '#/definitions/events.NewEvent'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Add a new event to the db.
+      tags:
+      - Events
   /api/v1/people:
     get:
       description: Get people from db.
