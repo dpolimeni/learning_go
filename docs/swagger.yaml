@@ -22,8 +22,6 @@ definitions:
         type: integer
       name:
         type: string
-      pass:
-        type: string
     type: object
 host: localhost:8080
 info:
@@ -73,35 +71,6 @@ paths:
             additionalProperties: true
             type: object
       summary: Get all people.
-      tags:
-      - People
-  /api/v1/person:
-    post:
-      consumes:
-      - application/json
-      description: Add a person on DB.
-      parameters:
-      - description: Person
-        in: body
-        name: person
-        required: true
-        schema:
-          $ref: '#/definitions/people.Person'
-      - default: Bearer
-        description: Authorization
-        in: header
-        name: Authorization
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            additionalProperties: true
-            type: object
-      summary: Add a person on DB.
       tags:
       - People
   /api/v1/person/{id}:
@@ -159,6 +128,79 @@ paths:
       summary: Get a single person.
       tags:
       - People
+  /api/v1/person/{username}:
+    put:
+      consumes:
+      - application/json
+      description: Update a person data (age/email)
+      parameters:
+      - description: Person username
+        in: path
+        name: username
+        required: true
+        type: string
+      - description: Person data to update
+        in: body
+        name: person
+        required: true
+        schema:
+          $ref: '#/definitions/people.Person'
+      - default: Bearer
+        description: Authorization
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Update a person data
+      tags:
+      - People
+  /api/v1/reservations:
+    get:
+      description: Get reservations from db.
+      parameters:
+      - default: Bearer
+        description: Authorization
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      summary: Get all reservations.
+      tags:
+      - Reservations
+  /api/v1/reservations/{id}:
+    get:
+      consumes:
+      - '*/*'
+      description: Get reservation from db.
+      parameters:
+      - default: Bearer
+        description: Authorization
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Reservation ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      summary: Get a single reservation.
+      tags:
+      - Reservations
   /auth/login:
     post:
       consumes:
