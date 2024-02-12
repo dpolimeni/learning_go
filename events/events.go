@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/dpolimeni/fiber_app/auth"
 	"github.com/dpolimeni/fiber_app/common"
 	jwtware "github.com/gofiber/contrib/jwt"
 	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v5"
 	_ "github.com/lib/pq"
 )
 
@@ -46,6 +48,16 @@ func GetEvents(c *fiber.Ctx) error {
 // @Param Authorization header string true "Authorization" Default(Bearer)
 // @Param NewEvent body NewEvent true "New Event to add"
 func AddEvent(c *fiber.Ctx) error {
+	// Verify if the username in the token is the same to the username in the url
+	// if not return an error
+	userToken := c.Locals("user").(*jwt.Token)
+	claims := userToken.Claims.(jwt.MapClaims)
+	username := claims["username"].(string)
+	is_superuser := auth.CheckSuperuser(DbClient, username)
+	if !is_superuser {
+		return c.Status(fiber.StatusUnauthorized).JSON("You are not authorized to create events")
+	}
+
 	newEvent := new(NewEvent)
 	if err := c.BodyParser(newEvent); err != nil {
 		fmt.Println(err)

@@ -2,9 +2,12 @@ package auth
 
 // Set up JWT AUTH
 import (
+	"context"
 	"os"
 	"time"
 
+	"github.com/dpolimeni/fiber_app/ent"
+	"github.com/dpolimeni/fiber_app/ent/user"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -34,4 +37,16 @@ func generateToken(username string) (map[string]string, error) {
 		"access":  access,
 		"refresh": refresh,
 	}, nil
+}
+
+func CheckSuperuser(DbClient *ent.Client, username string) bool {
+	user, err := DbClient.User.Query().Where(user.UsernameEQ(username)).First(context.Background())
+	if err != nil {
+		return false
+	}
+	if user.IsAdmin {
+		return true
+	} else {
+		return false
+	}
 }

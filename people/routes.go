@@ -112,6 +112,8 @@ func UpdatePerson(c *fiber.Ctx) error {
 	// Verify if the username in the token is the same to the username in the url
 	// if not return an error
 	userToken := c.Locals("user").(*jwt.Token)
+	fmt.Println(userToken)
+	fmt.Println(c.Locals("user"))
 	token_username := userToken.Claims.(jwt.MapClaims)["username"]
 	if token_username != username {
 		return c.Status(fiber.StatusUnauthorized).JSON("You are not authorized to update this user")
