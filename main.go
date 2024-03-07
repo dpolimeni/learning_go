@@ -33,6 +33,18 @@ var DbClient = common.GetDB()
 // @BasePath /
 // @name <YourTokenName>
 func main() {
+	// Test mongo connection
+	mongo := common.Mongo{
+		Username: "diegopolimeni",
+		Password: os.Getenv("mongo_password"),
+		Host:     os.Getenv("mongo_host"),
+	}
+	mongoclient, err := mongo.DataBase()
+	if err != nil {
+		log.Fatalf("failed opening connection to mongo: %v", err)
+	}
+	defer mongoclient.Disconnect(context.Background())
+	fmt.Println("Connected to MongoDB!")
 
 	// Create a new Fiber instance
 	app := fiber.New()
