@@ -150,6 +150,30 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/person/new": {
+            "post": {
+                "description": "Create Person record on MONGO",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "People"
+                ],
+                "summary": "Insert a new person",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/person/{id}": {
             "get": {
                 "description": "Get person from db.",

@@ -220,6 +220,22 @@ paths:
       summary: Update a person data
       tags:
       - People
+  /api/v1/person/new:
+    post:
+      consumes:
+      - application/json
+      description: Create Person record on MONGO
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Insert a new person
+      tags:
+      - People
   /api/v1/reservations:
     get:
       description: Get reservations from db.
